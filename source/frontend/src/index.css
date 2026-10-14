@@ -1,0 +1,1595 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Old WebKit can't parse dvh — the vh line keeps it usable, dvh overrides it where
+   supported since a later valid declaration on the same property wins. */
+.pmgr-h-dvh-100 { height: 100vh; height: 100dvh; }
+.pmgr-max-h-dvh-70 { max-height: 70vh; max-height: 70dvh; }
+.pmgr-max-h-dvh-75 { max-height: 75vh; max-height: 75dvh; }
+.pmgr-max-h-dvh-85 { max-height: 85vh; max-height: 85dvh; }
+@media (min-width: 640px) {
+  .pmgr-h-dvh-85-sm { height: 85vh; height: 85dvh; }
+}
+
+/* aspect-ratio isn't implemented on the PS5's WebKit build — old padding-box
+   trick stands in for it, only where the real property is unsupported. */
+@supports not (aspect-ratio: 1 / 1) {
+  .aspect-square { padding-bottom: 100%; }
+}
+
+/* Graphite/navy surfaces, cold blue brand identity. Brand (--color-accent)
+   means primary action / selection / navigation / identity — it is
+   deliberately NOT the same token as --color-info, which means "something
+   is happening" (transfers, progress, background jobs). Keeping those
+   separate is what stops one color from tinting the whole app. */
+:root {
+  --color-bg: #0a0e16;
+  --color-bg-rgb: 10, 14, 22;
+  --color-panel: #10161f;
+  --color-panel-rgb: 16, 22, 31;
+  --color-panel-2: #161e2a;
+  --color-panel-2-rgb: 22, 30, 42;
+  --color-panel-border: #24303f;
+  --color-panel-border-rgb: 36, 48, 63;
+  --color-text: #eaf1f8;
+  --color-text-rgb: 234, 241, 248;
+  --color-text-dim: #8b9bad;
+  --color-text-dim-rgb: 139, 155, 173;
+
+  --color-accent: #2f8cff;
+  --color-accent-rgb: 47, 140, 255;
+  --color-accent-hover: #57a5ff;
+  --color-accent-hover-rgb: 87, 165, 255;
+  --color-info: #38bdf8;
+  --color-info-rgb: 56, 189, 248;
+  --color-ok: #34b168;
+  --color-ok-rgb: 52, 177, 104;
+  --color-warn: #eab308;
+  --color-warn-rgb: 234, 179, 8;
+  --color-err: #ef4444;
+  --color-err-rgb: 239, 68, 68;
+
+  /* Motion tokens — every transition/animation in this file should trace
+     back to one of these instead of picking an arbitrary duration. */
+  --motion-instant: 120ms;
+  --motion-fast: 180ms;
+  --motion-ui: 260ms;
+  --motion-panel: 360ms;
+  --motion-large: 480ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Theme presets, picked from Settings → Appearance. Each redefines the full
+   token set so they don't have to compose — "dark" (the default) needs no
+   attribute at all. */
+html[data-pmgr-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f4f8fc;
+  --color-bg-rgb: 244, 248, 252;
+  --color-panel: #ffffff;
+  --color-panel-rgb: 255, 255, 255;
+  --color-panel-2: #f6f9fc;
+  --color-panel-2-rgb: 246, 249, 252;
+  --color-panel-border: #d9e3ee;
+  --color-panel-border-rgb: 217, 227, 238;
+  --color-text: #142033;
+  --color-text-rgb: 20, 32, 51;
+  --color-text-dim: #56687d;
+  --color-text-dim-rgb: 86, 104, 125;
+  --color-accent: #1f6fe0;
+  --color-accent-rgb: 31, 111, 224;
+  --color-accent-hover: #3c86f2;
+  --color-accent-hover-rgb: 60, 134, 242;
+  --color-info: #0891b2;
+  --color-info-rgb: 8, 145, 178;
+  --color-ok: #16874a;
+  --color-ok-rgb: 22, 135, 74;
+  --color-warn: #b77900;
+  --color-warn-rgb: 183, 121, 0;
+  --color-err: #d93445;
+  --color-err-rgb: 217, 52, 69;
+}
+
+html:not([data-pmgr-theme="light"]) {
+  color-scheme: dark;
+}
+
+/* The header's social buttons use white text over a translucent dark tint —
+   reads great on the dark theme's near-black background, but alpha-blended
+   over Light's white panel that same tint washes out to pale and the white
+   text goes near-invisible. Solid brand colors instead, so contrast holds
+   regardless of what's behind them. */
+html[data-pmgr-theme="light"] .pmgr-social-discord {
+  background: #5865f2;
+  border-color: rgba(88, 101, 242, 0.6);
+  box-shadow: none;
+}
+html[data-pmgr-theme="light"] .pmgr-social-bluesky {
+  background: #0085fe;
+  border-color: rgba(0, 133, 254, 0.6);
+  box-shadow: none;
+}
+html[data-pmgr-theme="light"] .pmgr-social-support {
+  background: #db2777;
+  border-color: rgba(219, 39, 119, 0.6);
+  box-shadow: none;
+}
+
+/* Light is a complete surface treatment, not just swapped text tokens. */
+html[data-pmgr-theme="light"] .pmgr-bg {
+  background:
+    radial-gradient(900px 520px at 90% -10%, rgba(var(--color-accent-rgb), 0.12), transparent 62%),
+    radial-gradient(700px 480px at -10% 105%, rgba(var(--color-info-rgb), 0.09), transparent 58%),
+    linear-gradient(145deg, #f9fbff 0%, #eef5fc 48%, #f7faff 100%);
+}
+html[data-pmgr-theme="light"] .pmgr-bg::after {
+  background-image:
+    linear-gradient(rgba(30, 64, 100, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 64, 100, 0.04) 1px, transparent 1px);
+  opacity: 0.58;
+}
+html[data-pmgr-theme="light"] .pmgr-header,
+html[data-pmgr-theme="light"] .pmgr-nav-shell,
+html[data-pmgr-theme="light"] .pmgr-mobile-nav {
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14px 40px rgba(45, 78, 112, 0.09);
+}
+html[data-pmgr-theme="light"] .pmgr-connection-pill {
+  background: rgba(255, 255, 255, 0.78);
+}
+html[data-pmgr-theme="light"] .pmgr-panel {
+  box-shadow: 0 16px 42px rgba(45, 78, 112, 0.1);
+}
+html[data-pmgr-theme="light"] .pmgr-empty-state {
+  background: rgba(0, 121, 216, 0.025);
+}
+html[data-pmgr-theme="light"] .pmgr-global-activity {
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 24px 70px rgba(45, 78, 112, 0.2), 0 0 35px rgba(0, 121, 216, 0.08);
+}
+html[data-pmgr-theme="light"] .pmgr-aurora-blob {
+  opacity: 0.055;
+  mix-blend-mode: multiply;
+}
+
+/* Blends baked at build time (see the matching dark rules further down) —
+   old WebKit has no color-mix(), so each theme needs its own literal value. */
+html[data-pmgr-theme="light"] .pmgr-tile:hover { border-color: #aeb8c5; }
+html[data-pmgr-theme="light"] .pmgr-global-drop-card { border-color: #85afe8; }
+html[data-pmgr-theme="light"] .pmgr-global-drop-icon { background: #e4eefb; }
+html[data-pmgr-theme="light"] .pmgr-pkg-drop:hover { border-color: #73a3e6; }
+html[data-pmgr-theme="light"] .pmgr-gear-btn:hover { border-color: #7ca9e7; }
+html[data-pmgr-theme="light"] .pmgr-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-panel-border) 25%,
+    #bdd2ec 50%,
+    var(--color-panel-border) 75%
+  );
+  background-size: 600px 100%;
+}
+html[data-pmgr-theme="light"] .pmgr-support-hero {
+  background:
+    radial-gradient(circle at 50% -30%, rgba(244, 114, 182, 0.3), transparent 58%),
+    linear-gradient(180deg, #f5edf5, var(--color-panel));
+}
+html[data-pmgr-theme="light"] .pmgr-support-option { background: #f9fbfd; }
+html[data-pmgr-theme="light"] .pmgr-support-kofi .pmgr-support-option-icon { background: #fde9f3; }
+html[data-pmgr-theme="light"] .pmgr-support-coffee .pmgr-support-option-icon { background: #fff0e8; }
+html[data-pmgr-theme="light"] .pmgr-support-crypto .pmgr-support-option-icon { background: #fef3e2; }
+html[data-pmgr-theme="light"] .pmgr-support-pix .pmgr-support-option-icon { background: #eaf6f5; }
+html[data-pmgr-theme="light"] .pmgr-support-kofi:hover { border-color: #e1a2ca; }
+html[data-pmgr-theme="light"] .pmgr-support-coffee:hover { border-color: #e9baa4; }
+html[data-pmgr-theme="light"] .pmgr-support-crypto:hover { border-color: #e5c68f; }
+html[data-pmgr-theme="light"] .pmgr-support-pix:hover { border-color: #9fd1d3; }
+html[data-pmgr-theme="light"] .pmgr-crypto-address:hover {
+  border-color: #7ca9e7;
+  background: #e9f1fb;
+}
+
+@media (hover: hover) {
+  html[data-pmgr-theme="light"] .pmgr-panel:hover { border-color: #b6c0cc; }
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.5;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select,
+textarea {
+  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease, background-color var(--motion-fast) ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.12);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+@media (pointer: coarse) {
+  .pmgr-button.pmgr-icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+::selection {
+  color: white;
+  background: rgba(var(--color-accent-rgb), 0.65);
+}
+
+/* Prose stays system-sans; anything data-ish (pills, version tags, stat
+   readouts) goes monospace for a technical-dashboard feel instead of
+   blending into the body text. */
+.pmgr-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+}
+
+/* Fixed glow + faint grid behind the whole app for a technical-dashboard backdrop. */
+.pmgr-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1000px 560px at 88% -12%, rgba(var(--color-accent-rgb), 0.15), transparent 62%),
+    radial-gradient(720px 520px at -12% 105%, rgba(var(--color-info-rgb), 0.09), transparent 58%),
+    linear-gradient(145deg, #070a10 0%, #0b111c 48%, #080c14 100%);
+}
+.pmgr-bg::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: 42px 42px;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  opacity: 0.38;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent 70%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent 70%);
+}
+
+.pmgr-header,
+.pmgr-nav-shell,
+.pmgr-mobile-nav {
+  background: rgba(12, 17, 28, 0.88);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+
+.pmgr-header {
+  position: relative;
+  z-index: 20;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.pmgr-nav-shell {
+  position: relative;
+  z-index: 25;
+  box-shadow: 18px 0 45px rgba(0, 0, 0, 0.16);
+}
+
+.pmgr-nav-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-panel-border) transparent;
+}
+
+/* Settings tab strip scrolls horizontally on narrow screens instead of
+   wrapping into a multi-row button mess. */
+.pmgr-settings-tabs {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-panel-border) transparent;
+}
+.pmgr-settings-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+.pmgr-settings-tabs::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--color-panel-border);
+}
+
+.pmgr-nav-item {
+  position: relative;
+  overflow: hidden;
+  transition: color var(--motion-fast) ease, background-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+
+.pmgr-nav-item:hover {
+  transform: translateX(2px);
+}
+
+.pmgr-nav-item::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 8px 8px 0;
+  background: var(--color-accent);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition: opacity 0.2s ease, transform 0.25s ease;
+}
+
+/* Brand-tinted surface + brand text/icon + the left indicator bar below,
+   instead of painting the whole item opaque accent — less accent
+   dominance across a rail of ten items, still unambiguous which is active. */
+.pmgr-nav-item.is-active {
+  background: rgba(var(--color-accent-rgb), 0.16);
+  color: var(--color-accent);
+}
+
+.pmgr-nav-item.is-active::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.pmgr-mobile-nav {
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.3);
+}
+
+.pmgr-mobile-nav-item {
+  position: relative;
+  transition: color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.pmgr-mobile-nav-item:active {
+  transform: translateY(1px) scale(0.96);
+}
+
+.pmgr-mobile-nav-item[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 2px;
+  border-radius: 0 0 4px 4px;
+  background: var(--color-accent);
+  box-shadow: 0 0 12px var(--color-accent);
+}
+
+.pmgr-offline-banner {
+  color: #fecaca;
+  background: linear-gradient(90deg, rgba(127, 29, 29, 0.82), rgba(153, 27, 27, 0.68));
+  border-bottom: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.pmgr-main {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-panel-border) transparent;
+  scroll-behavior: smooth;
+}
+
+.pmgr-main::-webkit-scrollbar,
+.pmgr-nav-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pmgr-main::-webkit-scrollbar-thumb,
+.pmgr-nav-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--color-panel-border);
+  background-clip: padding-box;
+}
+
+.pmgr-connection-pill {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-panel-border);
+  border-radius: 999px;
+  color: var(--color-text-dim);
+  background: rgba(10, 14, 23, 0.55);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+.pmgr-connection-pill.is-online {
+  color: var(--color-ok);
+  border-color: rgba(63, 166, 104, 0.32);
+  background: rgba(63, 166, 104, 0.08);
+}
+
+.pmgr-connection-pill.is-offline {
+  color: var(--color-err);
+  border-color: rgba(239, 68, 68, 0.38);
+  background: rgba(239, 68, 68, 0.1);
+  cursor: pointer;
+}
+
+.pmgr-connection-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.pmgr-connection-pill.is-connecting .pmgr-connection-dot {
+  animation: pmgr-pulse 1s ease-in-out infinite;
+}
+
+.pmgr-empty-state {
+  border: 1px dashed var(--color-panel-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.pmgr-global-activity {
+  right: 18px;
+  bottom: 18px;
+  background: rgba(19, 26, 38, 0.96);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.44), 0 0 40px rgba(var(--color-info-rgb), 0.1);
+}
+
+@media (max-width: 767px) {
+  .pmgr-global-activity {
+    right: 12px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+}
+
+
+/* Slow-drifting glow blob behind the app, same idea as a lava-lamp background. */
+.pmgr-aurora-blob {
+  position: fixed;
+  z-index: -1;
+  width: 46vw;
+  height: 46vw;
+  top: -14%;
+  right: -10%;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  opacity: 0.055;
+  filter: blur(120px);
+  mix-blend-mode: screen;
+  animation: pmgr-blob-drift 40s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes pmgr-blob-drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(-6%, 8%) scale(1.15);
+  }
+}
+/* Second, cooler-toned blob opposite the first — two glows drifting at
+   different speeds instead of one flat wash. */
+.pmgr-aurora-blob-2 {
+  top: auto;
+  right: auto;
+  bottom: -16%;
+  left: -12%;
+  width: 38vw;
+  height: 38vw;
+  background: var(--color-info);
+  opacity: 0.045;
+  animation-name: pmgr-blob-drift-2;
+  animation-duration: 55s;
+}
+@keyframes pmgr-blob-drift-2 {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(8%, -6%) scale(1.2);
+  }
+}
+@media (max-width: 768px) {
+  .pmgr-aurora-blob {
+    display: none;
+  }
+}
+
+/* Panel: neutral surface by default — brand color is reserved for actions
+   and selection, not painted onto every container on the page. A Panel is a
+   generic layout container, not an event — it does not animate itself on
+   mount (the view around it already plays pmgr-view-enter once; a panel
+   rising a second time on top of that is the "double entrance" the motion
+   pass fixed). pmgr-panel-in stays defined for the few places that
+   deliberately opt into it (a panel appearing dynamically mid-page, not as
+   part of the initial view mount) by adding the modifier class explicitly. */
+.pmgr-panel {
+  position: relative;
+  background: linear-gradient(180deg, var(--color-panel-2), var(--color-panel));
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+  transition: border-color var(--motion-ui) ease, box-shadow var(--motion-ui) ease;
+}
+
+@keyframes pmgr-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Opt-in modifier — a panel that appears on its own after the view has
+   already settled (not part of the view's initial mount). */
+.pmgr-panel-in {
+  animation: pmgr-panel-in var(--motion-panel) var(--ease-snappy) both;
+}
+
+/* Small pulsing dot for "live"/running status pills. */
+@keyframes pmgr-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+.pmgr-live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: pmgr-pulse 1.8s ease-in-out infinite;
+}
+
+/* Toast entrance + exit — a toast that's done should leave the same
+   deliberate way it arrived, not vanish mid-frame. Manual dismiss (the ✕
+   button) plays the same exit as the auto-dismiss timeout. */
+@keyframes pmgr-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes pmgr-toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+.pmgr-toast {
+  animation: pmgr-toast-in var(--motion-ui) var(--ease-snappy) both;
+}
+.pmgr-toast.is-closing {
+  animation: pmgr-toast-out var(--motion-instant) var(--ease-standard) both;
+}
+
+/* Countdown bar showing how long is left before a toast auto-dismisses —
+   width matches the toast's own lifetime (see TOAST_MS in ToastContext.jsx). */
+@keyframes pmgr-toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.pmgr-toast-bar {
+  animation: pmgr-toast-countdown 6s linear both;
+}
+
+/* Payload/game tile: a neutral lift on hover — dozens of these are visible
+   at once in a grid, so hover shouldn't paint every one in brand color. */
+.pmgr-tile {
+  transition:
+    transform var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+.pmgr-tile:hover {
+  transform: translateY(-2px);
+  border-color: #505a68;
+  box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Full-viewport file targeting keeps drag-and-drop effortless on every
+   upload screen. The portal avoids transformed panels clipping the overlay. */
+@keyframes pmgr-drop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pmgr-drop-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pmgr-global-drop {
+  color: var(--color-accent);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(var(--color-accent-rgb), 0.18), transparent 42%),
+    rgba(var(--color-bg-rgb), 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: pmgr-drop-in 0.15s ease both;
+}
+.pmgr-global-drop::before {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  border: 2px dashed rgba(var(--color-accent-rgb), 0.72);
+  border-radius: 24px;
+  content: '';
+  box-shadow: inset 0 0 50px rgba(var(--color-accent-rgb), 0.07);
+}
+.pmgr-global-drop-card {
+  position: relative;
+  padding: 28px 34px;
+  border: 1px solid #295995;
+  border-radius: 20px;
+  background: rgba(var(--color-panel-rgb), 0.92);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35), 0 0 40px rgba(var(--color-accent-rgb), 0.14);
+  animation: pmgr-drop-card-in 0.25s cubic-bezier(0.2, 0.85, 0.25, 1.1) both;
+}
+.pmgr-global-drop-icon {
+  border: 1px solid rgba(var(--color-accent-rgb), 0.42);
+  background: #14243a;
+  box-shadow: 0 0 24px rgba(var(--color-accent-rgb), 0.18);
+}
+.pmgr-pkg-drop {
+  background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.05), transparent 55%);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+.pmgr-pkg-drop:hover {
+  border-color: #2a63a9;
+  background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.09), transparent 60%);
+}
+
+/* Home library cards are deliberately horizontal: names and activity stay
+   readable without needing to hover over a wall of square cover art. */
+.pmgr-game-card {
+  isolation: isolate;
+}
+.pmgr-game-card::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle at 20% 50%, rgba(var(--color-accent-rgb), 0.08), transparent 50%);
+  content: '';
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.pmgr-game-card:hover::after { opacity: 1; }
+.pmgr-game-art::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 65%, rgba(var(--color-panel-rgb), 0.35));
+  content: '';
+}
+.pmgr-game-play {
+  box-shadow: 0 5px 16px rgba(var(--color-accent-rgb), 0.2);
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.pmgr-game-play:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 22px rgba(var(--color-accent-rgb), 0.3);
+}
+.pmgr-library-toolbar {
+  box-shadow: inset 0 1px 0 rgba(var(--color-text-rgb), 0.03);
+}
+
+@media (hover: hover) {
+  .pmgr-panel:hover {
+    border-color: #485360;
+    box-shadow: 0 22px 58px rgba(0, 0, 0, 0.24);
+  }
+}
+
+/* Sidebar section chevron — rotates open instead of swapping glyphs. */
+.pmgr-chevron {
+  display: inline-flex;
+  transition: transform var(--motion-fast) ease;
+}
+.pmgr-chevron-open {
+  transform: rotate(180deg);
+}
+
+/* Collapsible section reveal — grid-template-rows 0fr->1fr instead of
+   mount/unmount, so content height animates smoothly instead of snapping.
+   The inner wrapper needs min-height:0 for the row track to actually
+   collapse, and overflow:hidden so mid-transition content doesn't spill. */
+.pmgr-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows var(--motion-ui) var(--ease-standard), opacity var(--motion-ui) var(--ease-standard);
+}
+.pmgr-collapse.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.pmgr-collapse > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Small anchored popovers (file/payload action menus) — quick scale+fade
+   from the corner they open from, not a modal-weight pop. */
+@keyframes pmgr-menu-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.pmgr-menu-pop {
+  transform-origin: top right;
+  animation: pmgr-menu-in var(--motion-instant) var(--ease-out) both;
+}
+
+/* Mobile bottom sheet — rises from the edge it belongs to, never scales
+   from the center like a dialog. */
+@keyframes pmgr-sheet-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pmgr-sheet-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(16px); }
+}
+.pmgr-sheet {
+  animation: pmgr-sheet-in var(--motion-ui) var(--ease-snappy) both;
+}
+.pmgr-sheet.is-closing {
+  animation: pmgr-sheet-out var(--motion-instant) var(--ease-standard) both;
+}
+
+/* Monospace scrolling console for the Logs panel. */
+.pmgr-log-console {
+  max-height: 220px;
+  overflow-y: auto;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-panel-border);
+  background: var(--color-bg);
+  padding: 0.5rem 0.625rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.pmgr-log-console.flex-1 {
+  max-height: none;
+}
+
+/* Modal backdrop — a fullscreen scrim only ever fades. It must never scale
+   or translate like the content sitting on top of it; that's what made
+   dialogs feel like toasts instead of dialogs. */
+@keyframes pmgr-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pmgr-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.pmgr-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(5, 7, 12, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: pmgr-overlay-in var(--motion-fast) ease both;
+}
+
+/* Closing reverses the open animations but quicker — the user already
+   decided to leave, so it shouldn't make them wait as long as opening did. */
+.pmgr-modal-overlay.is-closing {
+  animation: pmgr-overlay-out var(--motion-instant) ease both;
+}
+@keyframes pmgr-modal-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+}
+.pmgr-modal-pop.is-closing {
+  animation: pmgr-modal-out var(--motion-instant) cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/* The path picker has a fixed visual ceiling and lets only its directory list
+   scroll. This prevents the footer from falling below the PS5 browser viewport
+   and keeps volume labels inside their buttons at every supported resolution. */
+.pmgr-path-picker {
+  height: 680px;
+  max-height: calc(100vh - 32px);
+}
+
+@media (max-height: 700px) {
+  .pmgr-path-picker-overlay { padding: 0.5rem; }
+  .pmgr-path-picker { max-height: calc(100vh - 16px); }
+  .pmgr-path-picker-volumes { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+}
+
+/* Pill-shaped brand buttons for the header — translucent brand-color glass
+   with a matching glow, lift + brighten on hover, squash on click. */
+.pmgr-social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 13px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+.pmgr-social-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.12);
+}
+.pmgr-social-btn:active {
+  transform: scale(0.96);
+}
+/* Blur radii kept modest on purpose — the header's own scroll strip only
+   has so much padding to spend on ink overflow before either the glow
+   clips again or the header grows taller than a header should be. */
+.pmgr-social-discord {
+  border: 1px solid rgba(88, 101, 242, 0.55);
+  background: rgba(30, 33, 108, 0.35);
+  box-shadow: 0 0 10px rgba(88, 101, 242, 0.18);
+}
+.pmgr-social-discord:hover {
+  box-shadow: 0 0 15px rgba(88, 101, 242, 0.35);
+}
+.pmgr-social-x {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(180deg, rgba(24, 24, 27, 0.96), rgba(0, 0, 0, 0.96));
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+.pmgr-social-x:hover {
+  box-shadow:
+    0 0 13px rgba(255, 255, 255, 0.08),
+    0 0 15px rgba(0, 0, 0, 0.4);
+}
+.pmgr-social-bluesky {
+  border: 1px solid rgba(0, 133, 254, 0.55);
+  background: rgba(0, 72, 135, 0.35);
+  box-shadow: 0 0 10px rgba(0, 133, 254, 0.18);
+}
+.pmgr-social-bluesky:hover {
+  box-shadow: 0 0 15px rgba(0, 133, 254, 0.35);
+}
+.pmgr-social-support {
+  border: 1px solid rgba(244, 114, 182, 0.6);
+  background: rgba(157, 23, 77, 0.38);
+  box-shadow: 0 0 10px rgba(244, 114, 182, 0.25);
+}
+.pmgr-social-support:hover {
+  box-shadow: 0 0 16px rgba(244, 114, 182, 0.45);
+}
+.pmgr-gear-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 13px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--color-text);
+  border: 1px solid var(--color-panel-border);
+  background: var(--color-panel-2);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    filter 0.15s ease;
+}
+.pmgr-gear-btn:hover {
+  transform: translateY(-1px);
+  border-color: #2a5e9f;
+  filter: brightness(1.12);
+}
+
+/* Grid entrance — each tile fades/rises in, staggered by its index via the
+   --ti custom property so a whole grid cascades instead of popping at once. */
+@keyframes pmgr-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.pmgr-tile-in {
+  animation: pmgr-tile-in 0.4s var(--ease-snappy) both;
+  /* Capped so a grid of hundreds of items still finishes settling in a
+     quarter second instead of the stagger stretching on for seconds. */
+  animation-delay: min(calc(var(--ti, 0) * 30ms), 240ms);
+}
+
+/* Same idea, lighter touch — for table rows (file lists, process lists). */
+@keyframes pmgr-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.pmgr-row-in {
+  animation: pmgr-row-in 0.25s ease-out both;
+  animation-delay: min(calc(var(--ti, 0) * 18ms), 200ms);
+}
+
+/* Notification badge pops when the unread count changes, instead of just
+   silently updating the number. */
+@keyframes pmgr-badge-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.pmgr-badge-pop {
+  animation: pmgr-badge-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Modal content — fade + small rise + very subtle scale, distinct from the
+   backdrop it sits on (see pmgr-overlay-in above). Used by dialogs, the
+   Support modal, tour, command palette, and fullscreen log console. */
+@keyframes pmgr-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.pmgr-modal-pop {
+  animation: pmgr-pop-in var(--motion-panel) var(--ease-spring) both;
+}
+
+/* Skeleton placeholder — shimmering bar for anything still loading. */
+@keyframes pmgr-shimmer {
+  from {
+    background-position: -300px 0;
+  }
+  to {
+    background-position: 300px 0;
+  }
+}
+.pmgr-skeleton {
+  border-radius: 0.375rem;
+  background: linear-gradient(
+    90deg,
+    var(--color-panel-border) 25%,
+    #263e5c 50%,
+    var(--color-panel-border) 75%
+  );
+  background-size: 600px 100%;
+  animation: pmgr-shimmer 1.6s infinite linear;
+}
+
+/* Sheen sweep across primary CTA buttons on hover — a light diagonal
+   highlight passing through, not just a color change. */
+.pmgr-btn-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.pmgr-btn-sheen::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+.pmgr-btn-sheen:hover::after {
+  left: 130%;
+}
+
+/* View switch — the whole page content eases in once when you change tabs.
+   Restrained: a small fade + rise, not a slide. Nothing inside should
+   replay this on its own (polling, panels, tiles handle their own, lighter
+   feedback instead — see pmgr-panel/pmgr-tile-in/pmgr-row-in). */
+@keyframes pmgr-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.pmgr-view-enter {
+  animation: pmgr-view-enter var(--motion-ui) var(--ease-snappy) both;
+}
+
+/* Sweeping bar for phases with no real percentage to report (PKG install —
+   AppInstUtil gives no progress callback), so it's honest about not knowing. */
+@keyframes pmgr-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+.pmgr-indeterminate {
+  width: 33% !important;
+  animation: pmgr-indeterminate 1.1s ease-in-out infinite;
+}
+
+/* Icon buttons squash slightly on press — the only feedback that needs no
+   extra JS or animation-end bookkeeping. */
+.pmgr-icon-btn {
+  transition: transform var(--motion-instant) ease, filter var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
+}
+
+/* Touch hit-area expansion — a dense icon button (three-dot menus, Help,
+   notifications, language picker, per-row actions) can stay visually small
+   while still offering a ~44px tap target on touch devices, via an
+   invisible pseudo-element instead of inflating the visible control. */
+@media (hover: none) and (pointer: coarse) {
+  .pmgr-icon-btn {
+    position: relative;
+  }
+  .pmgr-icon-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 50%;
+    bottom: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+.pmgr-icon-btn:active {
+  transform: scale(0.88);
+}
+
+/* Physical on/off switch — track fill + thumb slide, replaces bare
+   checkboxes and fake "On/Off" buttons everywhere in the app. */
+.pmgr-toggle {
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 24px;
+  border: 1px solid var(--color-panel-border);
+  border-radius: 999px;
+  background: var(--color-panel-2);
+  transition: background-color var(--motion-fast) ease, border-color var(--motion-fast) ease;
+}
+.pmgr-toggle:active:not(:disabled) .pmgr-toggle-thumb {
+  width: 20px;
+}
+.pmgr-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pmgr-toggle.is-on {
+  border-color: rgba(var(--color-accent-rgb), 0.55);
+  background: var(--color-accent);
+}
+.pmgr-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.12s ease;
+}
+.pmgr-toggle.is-on .pmgr-toggle-thumb {
+  transform: translateX(18px);
+}
+
+/* Short-lived, JS-toggled window during a theme switch — see ThemePanel.
+   Never left on permanently, so it can't cost anything at steady state. */
+.pmgr-theme-transition,
+.pmgr-theme-transition * {
+  transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease !important;
+}
+
+/* Shared controls: lift, glow and icon travel are consistent everywhere. */
+.pmgr-button {
+  position: relative;
+  transition: transform 0.17s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.17s ease,
+    background-color 0.17s ease, filter 0.17s ease, box-shadow 0.17s ease;
+}
+/* Neutral lift for every button — tone-specific color (primary blue, danger
+   red, ok green) already comes from each TONES entry in Button.jsx, so hover
+   shouldn't tint a danger or neutral button blue on top of that. */
+.pmgr-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px -14px rgba(0, 0, 0, 0.45);
+}
+.pmgr-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
+}
+.pmgr-button .pmgr-action-icon {
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pmgr-button:hover:not(:disabled) .pmgr-action-icon {
+  transform: scale(1.08) translateY(-0.5px);
+}
+.pmgr-nav-item .pmgr-action-icon,
+.pmgr-thanks-card .pmgr-action-icon {
+  transition: transform 0.2s ease;
+}
+.pmgr-nav-item:hover .pmgr-action-icon {
+  transform: scale(1.08);
+}
+
+/* Support experience. */
+.pmgr-support-modal {
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.48), 0 0 60px rgba(236, 72, 153, 0.12);
+}
+.pmgr-support-hero {
+  background:
+    radial-gradient(circle at 50% -30%, rgba(244, 114, 182, 0.3), transparent 58%),
+    linear-gradient(180deg, #252132, var(--color-panel));
+}
+.pmgr-support-hero::before,
+.pmgr-support-hero::after {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #ec4899;
+  content: "";
+  opacity: 0.07;
+  filter: blur(2px);
+  animation: pmgr-support-orb 6s ease-in-out infinite alternate;
+}
+.pmgr-support-hero::before { left: -35px; top: -28px; }
+.pmgr-support-hero::after { right: -28px; bottom: -48px; animation-delay: -3s; }
+.pmgr-support-heart {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(135deg, #f472b6, #db2777);
+  box-shadow: 0 15px 38px rgba(219, 39, 119, 0.32);
+  animation: pmgr-heart-float 3.2s ease-in-out infinite;
+}
+.pmgr-support-close {
+  z-index: 2;
+  border: 1px solid rgba(var(--color-panel-border-rgb), 0.8);
+  background: rgba(var(--color-panel-rgb), 0.72);
+}
+.pmgr-support-option {
+  display: grid;
+  min-height: 72px;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid var(--color-panel-border);
+  border-radius: 14px;
+  color: var(--color-text);
+  background: #0d111a;
+  text-align: left;
+  text-decoration: none;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease,
+    box-shadow 0.2s ease, background 0.2s ease;
+}
+.pmgr-support-option strong,
+.pmgr-support-option small { display: block; }
+.pmgr-support-option strong { font-size: 14px; }
+.pmgr-support-option small { margin-top: 2px; color: var(--color-text-dim); font-size: 12px; }
+.pmgr-support-option-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--color-panel);
+}
+.pmgr-support-option:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-accent);
+  box-shadow: 0 16px 34px -20px currentColor;
+}
+.pmgr-support-option:hover > .pmgr-action-icon { transform: translateX(3px); }
+.pmgr-support-kofi { color: #ec4899; }
+.pmgr-support-coffee { color: #ff813f; }
+.pmgr-support-crypto { color: #f59e0b; }
+.pmgr-support-pix { color: #50b7ad; }
+/* Per-method tints, baked per theme instead of color-mix(currentColor, ...) —
+   the mix input is a static brand color, so it doesn't need to stay dynamic. */
+.pmgr-support-kofi .pmgr-support-option-icon { background: #2a1c2e; }
+.pmgr-support-coffee .pmgr-support-option-icon { background: #2d2323; }
+.pmgr-support-crypto .pmgr-support-option-icon { background: #2b261d; }
+.pmgr-support-pix .pmgr-support-option-icon { background: #182930; }
+.pmgr-support-kofi:hover { border-color: #783a65; }
+.pmgr-support-coffee:hover { border-color: #80523f; }
+.pmgr-support-crypto:hover { border-color: #7c5e29; }
+.pmgr-support-pix:hover { border-color: #36696d; }
+.pmgr-support-option strong { color: var(--color-text); }
+.pmgr-crypto-address {
+  transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+.pmgr-crypto-address:hover {
+  transform: translateX(3px);
+  border-color: #2a5e9f;
+  background: #0c1422;
+}
+.pmgr-theme-choice,
+.pmgr-thanks-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.pmgr-theme-choice:hover,
+.pmgr-thanks-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -20px rgba(var(--color-accent-rgb), 0.7);
+}
+.pmgr-thanks-card:hover { border-color: rgba(220, 38, 38, 0.42); }
+.pmgr-thanks-card:hover > .pmgr-action-icon { transform: translate(2px, -2px); }
+
+@keyframes pmgr-heart-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+@keyframes pmgr-support-orb {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(14px, 10px, 0) scale(1.15); }
+}
+@keyframes pmgr-rgb-cycle {
+  0%   { color: #ff4040; text-shadow: 0 0 8px #ff4040; }
+  17%  { color: #ff9900; text-shadow: 0 0 8px #ff9900; }
+  33%  { color: #ffe600; text-shadow: 0 0 8px #ffe600; }
+  50%  { color: #00ff88; text-shadow: 0 0 8px #00ff88; }
+  67%  { color: #00aaff; text-shadow: 0 0 8px #00aaff; }
+  83%  { color: #cc44ff; text-shadow: 0 0 8px #cc44ff; }
+  100% { color: #ff4040; text-shadow: 0 0 8px #ff4040; }
+}
+.pmgr-supporter-name {
+  font-weight: 700;
+  animation: pmgr-rgb-cycle 3s linear infinite;
+}
+.pmgr-supporter-name:nth-child(2) { animation-delay: -0.75s; }
+.pmgr-supporter-name:nth-child(3) { animation-delay: -1.5s; }
+.pmgr-supporter-name:nth-child(4) { animation-delay: -2.25s; }
+
+@media (max-width: 767px) {
+  .pmgr-header,
+  .pmgr-mobile-nav {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .pmgr-panel {
+    border-radius: 14px;
+  }
+}
+
+/* Hidden, not just frozen — a static blur(120px) layer still costs paint
+   time, same reasoning as the mobile breakpoint above. */
+.pmgr-low-power .pmgr-aurora-blob {
+  display: none;
+}
+
+/* Interface effects: Full/Reduced in Settings -> Appearance (a user
+   preference, persisted — distinct from the OS-level prefers-reduced-motion
+   query below, which keeps working independently). Reduced drops decorative/
+   ambient motion and blur; state/color feedback (live dots, toggles,
+   skeletons) is deliberately left out of this list so "something is
+   happening" still reads even with effects reduced. */
+.pmgr-low-power .pmgr-panel,
+.pmgr-low-power .pmgr-panel-in,
+.pmgr-low-power .pmgr-toast,
+.pmgr-low-power .pmgr-toast.is-closing,
+.pmgr-low-power .pmgr-toast-bar,
+.pmgr-low-power .pmgr-tile,
+.pmgr-low-power .pmgr-chevron,
+.pmgr-low-power .pmgr-modal-overlay,
+.pmgr-low-power .pmgr-aurora-blob,
+.pmgr-low-power .pmgr-social-btn,
+.pmgr-low-power .pmgr-gear-btn,
+.pmgr-low-power .pmgr-tile-in,
+.pmgr-low-power .pmgr-modal-pop,
+.pmgr-low-power .pmgr-btn-sheen::after,
+.pmgr-low-power .pmgr-view-enter,
+.pmgr-low-power .pmgr-icon-btn,
+.pmgr-low-power .pmgr-row-in,
+.pmgr-low-power .pmgr-badge-pop,
+.pmgr-low-power .pmgr-global-drop,
+.pmgr-low-power .pmgr-global-drop-card,
+.pmgr-low-power .pmgr-game-play,
+.pmgr-low-power .pmgr-button,
+.pmgr-low-power .pmgr-support-heart,
+.pmgr-low-power .pmgr-support-hero::before,
+.pmgr-low-power .pmgr-support-hero::after,
+.pmgr-low-power .pmgr-support-option,
+.pmgr-low-power .pmgr-theme-choice,
+.pmgr-low-power .pmgr-thanks-card,
+.pmgr-low-power .pmgr-supporter-name,
+.pmgr-low-power .pmgr-menu-pop,
+.pmgr-low-power .pmgr-sheet,
+.pmgr-low-power .pmgr-sheet.is-closing,
+.pmgr-low-power .pmgr-modal-overlay.is-closing,
+.pmgr-low-power .pmgr-modal-pop.is-closing {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Same "instant, not a jarring snap" treatment the OS-level query below
+   gives this — it's state feedback (open/closed), not decoration. */
+.pmgr-low-power .pmgr-collapse {
+  transition-duration: 1ms !important;
+}
+
+.pmgr-low-power .pmgr-header,
+.pmgr-low-power .pmgr-nav-shell,
+.pmgr-low-power .pmgr-mobile-nav,
+.pmgr-low-power .pmgr-modal-overlay,
+.pmgr-low-power .pmgr-global-drop,
+.pmgr-low-power .pmgr-blur-sheet {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Header glow shadows render on every page — cheap-looking, but a
+   permanent paint cost with no functional purpose. */
+.pmgr-low-power .pmgr-social-discord,
+.pmgr-low-power .pmgr-social-x,
+.pmgr-low-power .pmgr-social-bluesky,
+.pmgr-low-power .pmgr-social-support {
+  box-shadow: none !important;
+}
+
+/* The PS5 profile avoids large composited surfaces while preserving layout. */
+html.pmgr-ps5 .pmgr-bg {
+  background: var(--color-bg);
+}
+html.pmgr-ps5 .pmgr-bg::after,
+html.pmgr-ps5 .pmgr-aurora-blob {
+  display: none;
+}
+html.pmgr-ps5 .pmgr-header,
+html.pmgr-ps5 .pmgr-nav-shell,
+html.pmgr-ps5 .pmgr-mobile-nav,
+html.pmgr-ps5 .pmgr-modal-overlay,
+html.pmgr-ps5 .pmgr-global-activity,
+html.pmgr-ps5 .pmgr-global-drop,
+html.pmgr-ps5 .pmgr-blur-sheet,
+html.pmgr-ps5 .pmgr-toast,
+html.pmgr-ps5 .pmgr-payload-busy {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html.pmgr-ps5 .pmgr-header,
+html.pmgr-ps5 .pmgr-nav-shell,
+html.pmgr-ps5 .pmgr-mobile-nav,
+html.pmgr-ps5 .pmgr-global-activity,
+html.pmgr-ps5 .pmgr-toast {
+  box-shadow: none;
+}
+html.pmgr-ps5 .pmgr-main {
+  scroll-behavior: auto;
+}
+html.pmgr-ps5 .pmgr-view-enter,
+html.pmgr-ps5 .pmgr-home .pmgr-tile-in,
+html.pmgr-ps5 .pmgr-home .pmgr-live-dot,
+html.pmgr-ps5 .pmgr-home .pmgr-skeleton {
+  animation: none;
+}
+html.pmgr-ps5 .pmgr-home-library,
+html.pmgr-ps5 .pmgr-home-library:hover {
+  overflow: visible;
+  background: var(--color-panel);
+  box-shadow: none;
+  transition: none;
+}
+html.pmgr-ps5 .pmgr-home .pmgr-tile,
+html.pmgr-ps5 .pmgr-home .pmgr-game-play,
+html.pmgr-ps5 .pmgr-home-action-icon,
+html.pmgr-ps5 .pmgr-home-action-chevron,
+html.pmgr-ps5 .pmgr-home .pmgr-game-art img {
+  transition: none;
+}
+html.pmgr-ps5 .pmgr-home .pmgr-tile:hover,
+html.pmgr-ps5 .pmgr-home .pmgr-game-play:hover,
+html.pmgr-ps5 .pmgr-home .group:hover .pmgr-home-action-icon,
+html.pmgr-ps5 .pmgr-home .group:focus-visible .pmgr-home-action-icon,
+html.pmgr-ps5 .pmgr-home .group:hover .pmgr-home-action-chevron,
+html.pmgr-ps5 .pmgr-home .pmgr-game-art img {
+  transform: none;
+  box-shadow: none;
+}
+html.pmgr-ps5 .pmgr-home .pmgr-game-card {
+  contain: paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 160px;
+  isolation: auto;
+}
+html.pmgr-ps5 .pmgr-home .pmgr-game-card::after,
+html.pmgr-ps5 .pmgr-home .pmgr-game-art::after,
+html.pmgr-ps5 .pmgr-home .pmgr-btn-sheen::after {
+  display: none;
+}
+html.pmgr-ps5 .pmgr-home .pmgr-game-play {
+  box-shadow: none;
+}
+html.pmgr-ps5 .pmgr-home .pmgr-skeleton {
+  background: var(--color-panel-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pmgr-panel,
+  .pmgr-panel-in,
+  .pmgr-toast,
+  .pmgr-toast.is-closing,
+  .pmgr-toast-bar,
+  .pmgr-live-dot,
+  .pmgr-tile,
+  .pmgr-chevron,
+  .pmgr-modal-overlay,
+  .pmgr-aurora-blob,
+  .pmgr-social-btn,
+  .pmgr-gear-btn,
+  .pmgr-tile-in,
+  .pmgr-modal-pop,
+  .pmgr-skeleton,
+  .pmgr-btn-sheen::after,
+  .pmgr-view-enter,
+  .pmgr-icon-btn,
+  .pmgr-row-in,
+  .pmgr-badge-pop,
+  .pmgr-global-drop,
+  .pmgr-global-drop-card,
+  .pmgr-game-play,
+  .pmgr-button,
+  .pmgr-support-heart,
+  .pmgr-support-hero::before,
+  .pmgr-support-hero::after,
+  .pmgr-support-option,
+  .pmgr-theme-choice,
+  .pmgr-thanks-card,
+  .pmgr-supporter-name,
+  .pmgr-toggle,
+  .pmgr-toggle-thumb,
+  .pmgr-menu-pop,
+  .pmgr-sheet,
+  .pmgr-sheet.is-closing,
+  .pmgr-modal-overlay.is-closing,
+  .pmgr-modal-pop.is-closing {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* The collapse reveal is state feedback (open/closed), not decoration —
+     keep it, just make it instant instead of stripping it to a snap that
+     looks like a bug. */
+  .pmgr-collapse {
+    transition-duration: 1ms !important;
+  }
+}
+
+.hldrive-console :focus { outline: 3px solid #60a5fa !important; outline-offset: 3px; }
+.hldrive-console button { min-height: 40px; }
+
+/* Generated HLDRIVE hero artwork; file rows retain opaque readable panels. */
+.hldrive-brand-hero {
+  min-height: 184px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background-color: #030b1c;
+  background-image: url('/branding/hero.jpg');
+  background-size: auto 100%;
+  background-position: right center;
+  background-repeat: no-repeat;
+}
+.hldrive-brand-caption { max-width: 48%; padding: 24px; }
+@media (max-width: 767px) {
+  .hldrive-brand-hero { min-height: 132px; }
+  .hldrive-brand-caption { max-width: 52%; padding: 12px; }
+  .hldrive-brand-caption p { font-size: 11px; }
+  .hldrive-brand-caption p:first-child { font-size: 13px; }
+}

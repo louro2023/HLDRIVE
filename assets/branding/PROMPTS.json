@@ -1,0 +1,21 @@
+{
+  "tool": "Built-in image_gen",
+  "prompts": [
+    {
+      "name": "tile",
+      "prompt": "Use case: logo-brand. Create a polished original visual identity for HLDRIVE, a PS5 homebrew cloud-file manager. Inspired by Google Drive geometric folded ribbons and blue green yellow palette, but original emblem: three interlocking beveled ribbons forming a stylized H and downward arrow, small red accent. Dark midnight navy backdrop, restrained luminous edges, clean premium console-library aesthetic. Exact sole text: \"HLDRIVE\", bold white geometric sans serif, perfectly spelled. No Google wordmark, no PlayStation logos, no extra text or mockup frames. Square 1:1 game library tile. Large central emblem with HLDRIVE prominently underneath. Crisp legible silhouette at small sizes, balanced 12% safe margins, subtle dark radial gradient."
+    },
+    {
+      "name": "cover",
+      "prompt": "Use case: logo-brand. Create a polished original visual identity for HLDRIVE, a PS5 homebrew cloud-file manager. Inspired by Google Drive geometric folded ribbons and blue green yellow palette, but original emblem: three interlocking beveled ribbons forming a stylized H and downward arrow, small red accent. Dark midnight navy backdrop, restrained luminous edges, clean premium console-library aesthetic. Exact sole text: \"HLDRIVE\", bold white geometric sans serif, perfectly spelled. No Google wordmark, no PlayStation logos, no extra text or mockup frames. Portrait 2:3 cover artwork, flat front artwork not a physical box mockup. Heroic centered folded-ribbon H emblem floating over elegant blue green yellow flowing data ribbons, subtle perspective depth. HLDRIVE large in lower third, premium spacious composition."
+    },
+    {
+      "name": "hero",
+      "prompt": "Use case: logo-brand. Create a polished original visual identity for HLDRIVE, a PS5 homebrew cloud-file manager. Inspired by Google Drive geometric folded ribbons and blue green yellow palette, but original emblem: three interlocking beveled ribbons forming a stylized H and downward arrow, small red accent. Dark midnight navy backdrop, restrained luminous edges, clean premium console-library aesthetic. Exact sole text: \"HLDRIVE\", bold white geometric sans serif, perfectly spelled. No Google wordmark, no PlayStation logos, no extra text or mockup frames. Wide 16:9 hero background artwork. Place emblem and HLDRIVE together in right half, elegant sweeping blue green yellow ribbon trails flowing across the bottom. Keep left 45% dark and uncluttered for console interface overlays. Cinematic restrained glow, no tiny decorative text."
+    },
+    {
+      "name": "icon",
+      "prompt": "Use case: logo-brand. Create a polished original visual identity for HLDRIVE, a PS5 homebrew cloud-file manager. Inspired by Google Drive geometric folded ribbons and blue green yellow palette, but original emblem: three interlocking beveled ribbons forming a stylized H and downward arrow, small red accent. Dark midnight navy backdrop, restrained luminous edges, clean premium console-library aesthetic. Exact sole text: \"HLDRIVE\", bold white geometric sans serif, perfectly spelled. No Google wordmark, no PlayStation logos, no extra text or mockup frames. Square 1:1 app icon artwork. Very simple bold folded-ribbon H/downward-arrow emblem occupying central 65%, HLDRIVE clearly below in bold white. Midnight navy rounded-square icon surface, clean edges, almost flat premium shading, no busy trails. Full opaque square canvas."
+    }
+  ]
+}

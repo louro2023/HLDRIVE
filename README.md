@@ -1,0 +1,142 @@
+<p align="center"><img src="source/launcher/icon0.png" width="160" alt="HLDRIVE"></p>
+
+# HLDRIVE
+
+**Gerenciador homebrew de arquivos para PS5 com navegação em pastas públicas do Google Drive e download direto para uma pasta escolhida no console.**
+
+O HLDRIVE combina uma interface baseada no [ProsperoMgr](https://github.com/notmaj0r/ProsperoMgr) com um backend nativo em C++ e uma integração própria com o Google Drive. Interface, imagens e recursos ficam incorporados em um único `HLDRIVE.elf`.
+
+> **v0.2.0 — versão experimental.** Compilação e testes com dados simulados passaram. Transferências HTTPS reais, abertura do navegador, controle físico e registro do ícone ainda precisam de validação no PS5. O erro `HTTP 0, transporte 2` recebeu melhorias de configuração e diagnóstico, mas sua resolução no console **não está confirmada**.
+
+**[Baixar HLDRIVE.elf](https://github.com/louro2023/HLDRIVE/releases/download/v0.2.0/HLDRIVE.elf)** · **[Release](https://github.com/louro2023/HLDRIVE/releases/tag/v0.2.0)** · **[SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v0.2.0/HLDRIVE.elf.sha256)** · **[Atualizações](CHANGELOG.md)**
+
+![Interface HLDRIVE](docs/images/interface.png)
+
+*Captura do navegador em modo console, com APIs simuladas. “PS5 conectado” e os arquivos exibidos são dados de teste, não evidência de execução no hardware.*
+
+## Funcionalidades
+
+- Abrir links de pastas públicas do Drive e navegar por subpastas.
+- Selecionar arquivos/pastas e escolher o destino no PS5.
+- Usar **Baixar selecionados** ou **Copiar → Colar no console**.
+- Preservar a estrutura de diretórios ao baixar uma pasta.
+- Acompanhar progresso, velocidade média, estimativa de tempo e arquivos concluídos/ignorados.
+- Cancelar transferências e limpar tarefas finalizadas.
+- Navegar pelos arquivos locais, copiar, mover, renomear, excluir e usar os recursos de arquivos compactados herdados do Prospero.
+- Solicitar abertura da interface no navegador do PS5 e registrar um atalho próprio na aba **Mídia**.
+- Encerrar o processo ou remover atalho/configurações com confirmações separadas.
+
+**Abrir a pasta não inicia downloads.** Não há sincronização automática de toda a biblioteca nem instalação automática de jogos/pacotes. O HLDRIVE não fornece conteúdo, contas ou bibliotecas de jogos.
+
+## Requisitos e compatibilidade
+
+- PS5 com ambiente homebrew já ativo, privilégios compatíveis e loader ELF, como **elfldr**.
+- Internet para acessar o Drive e espaço suficiente no destino.
+- Pasta compartilhada como **“Qualquer pessoa com o link”**. Não há login Google/OAuth.
+
+O alvo inicial de testes é **firmware 12.40 com elfldr**. Suporte até 13.60 e versões anteriores é um objetivo, **não uma faixa homologada**.
+
+| Ambiente | Situação |
+| --- | --- |
+| elfldr | ELF64 x86-64 e envio pela porta usual 9021; execução real ainda requer teste. |
+| Payload Manager | Fluxo de importação/envio ao elfldr compatível por análise do código. HLDRIVE não está no catálogo padrão. |
+| Relapse | Usa elfldr em 9021 e declara suporte ao 12.40; isso não certifica HLDRIVE. Seu menu padrão não inclui HLDRIVE. |
+| Outros loaders | Não homologados nesta versão. |
+
+[Detalhes de compatibilidade](docs/COMPATIBILITY.md). O HLDRIVE não executa um exploit nem acrescenta suporte de jailbreak a um firmware.
+
+## Instalação e primeiro uso
+
+1. Baixe **somente `HLDRIVE.elf`** na [release](https://github.com/louro2023/HLDRIVE/releases/tag/v0.2.0). Não precisa copiar a pasta `build`, imagens ou código-fonte.
+2. Inicie o ambiente homebrew e o elfldr no PS5.
+3. Envie o ELF pelo loader, normalmente na porta **9021**, ou importe e execute pelo Payload Manager.
+4. O payload tenta abrir `http://127.0.0.1:7070/?console=1` no navegador do console. Se não abrir, acesse **`http://IP_DO_PS5:7070`** de outro dispositivo na mesma rede.
+5. Na aba **Google Drive**, cole o link público e pressione **Abrir pasta**.
+
+O atalho na aba Mídia abre a interface enquanto o payload está rodando. **Ele não carrega o ELF após reiniciar ou encerrar.** Execute novamente pelo loader ou configure o autoload no Payload Manager.
+
+Encerre uma versão anterior antes de carregar a nova. Outra aplicação usando a porta 7070 também impede o servidor de iniciar.
+
+## Escolher onde salvar
+
+1. Marque os arquivos/pastas desejados.
+2. Use **Baixar selecionados**, ou **Copiar** e depois **Colar no console**.
+3. Escolha o diretório de destino e confirme em **Iniciar cópia**.
+
+Por exemplo, `arquivo.pkg` baixado para `/data/Jogos` fica em `/data/Jogos/arquivo.pkg`. Uma pasta selecionada mantém suas subpastas dentro do destino. O seletor permite `/data` e áreas externas aceitas; o backend verifica o diretório antes de gravar.
+
+Durante o download, o conteúdo vai para um temporário `.part`, renomeado ao concluir. Falhas/cancelamentos tratados removem o parcial. Uma interrupção abrupta pode deixar um `.part` órfão.
+
+| Conflito de nome | Comportamento |
+| --- | --- |
+| Pular arquivos existentes | Preserva arquivos sem comparar conteúdo/tamanho; percorre pastas existentes para baixar o que falta. |
+| Manter ambos com outro nome | Gera um nome alternativo para o novo item. |
+| Parar este item | Interrompe o item em conflito e apresenta o erro. |
+
+A fila fica em memória e precisa ser recriada após reiniciar o payload. Não há retomada de um download remoto parcial.
+
+## Interface e controle
+
+O menu oferece **Google Drive** e **Arquivos do PS5**. No modo `?console=1`, o foco é destacado e as setas navegam entre controles. Quando o navegador expõe um gamepad padrão, direcional navega, **✕** seleciona e **○** fecha diálogos.
+
+Botões físicos, entrada de texto e histórico dependem do navegador PS5. Foram simulados em testes, mas ainda não homologados no console.
+
+As artes HLDRIVE aparecem no ícone de mídia, favicon, menu lateral, banner e tela de encerramento. O banner é um fundo **do HLDRIVE**, não papel de parede do sistema PS5. [Mapa das artes](assets/branding/README.md).
+
+## Encerrar, excluir e atualizar
+
+| Ação | Efeito |
+| --- | --- |
+| Encerrar HLDRIVE | Pede confirmação e encerra somente o processo; mantém arquivos, configurações e atalho. |
+| Excluir HLDRIVE | Pede confirmação, remove o título próprio HLDR00001 e configurações reconhecidas, depois encerra. Preserva downloads e arquivos desconhecidos. |
+| Adicionar ícone na Mídia | Repete o registro e apresenta erros do serviço de instalação. |
+
+As ações recusam prosseguir durante transferências, uploads ou operações locais ativas. Conclua ou cancele a fila antes de tentar novamente.
+
+“Excluir” não apaga recursivamente `/data/HLDRIVE`: remove apenas `drive-folder.txt`, `hldrive.log` e os arquivos reconhecidos do atalho. Cópias do ELF guardadas pelo usuário/manager, entradas de autoload e downloads permanecem. Para retirar o HLDRIVE da biblioteca do manager, desative seu autoload e remova a cópia pelo próprio manager.
+
+Para atualizar: encerre a versão antiga, substitua/importe o ELF da nova release e execute novamente. Não há atualização automática própria nesta versão.
+
+## Como funciona
+
+```mermaid
+flowchart LR
+    L[elfldr / Payload Manager] --> E[HLDRIVE.elf]
+    E --> H[Servidor local :7070]
+    B[Navegador PS5 ou dispositivo na LAN] --> H
+    H --> D[Listagem e fila do Drive]
+    D --> G[Google Drive via HTTPS]
+    G --> P[Temporário .part no PS5]
+    P --> F[Arquivo final no destino escolhido]
+    H --> M[Gerenciador local de arquivos]
+```
+
+O navegador envia comandos; o **backend do console** consulta o Drive e grava os arquivos. Downloads não passam pelo celular/computador usado para controlar a interface. A listagem usa HTML público de `embeddedfolderview`, sem chave de API. O transporte utiliza `sceNet`, `sceSsl` e `sceHttp`. O frontend React é incorporado ao ELF pelo gerador de assets.
+
+Veja [arquitetura](docs/ARCHITECTURE.md), [compilação](docs/BUILD.md) e [testes](docs/TESTING.md).
+
+## Limitações e diagnóstico
+
+- **Erro do Drive ainda precisa de confirmação em hardware:** `HTTP 0, transporte 2` reúne falhas anteriores à resposta HTTP. A versão atual preserva etapa, código SCE e detalhes TLS. Consulte a mensagem completa e `/data/HLDRIVE/hldrive.log`.
+- O transporte configura SNI, mantém a política de certificados da plataforma, solicita conteúdo sem compressão e repete uma vez a conexão antes de gravar quando não há falha TLS identificada. Isso não garante funcionamento em todos os firmwares.
+- O HTML do Google não é uma API estável. Não há paginação própria nem garantia de listar integralmente bibliotecas muito grandes.
+- Até **32 itens ativos** na fila; tarefas de pasta limitadas a **32 níveis e 10.000 itens**. Transferências sequenciais; navegação remota bloqueada enquanto há fila ativa.
+- Documentos nativos do Google e atalhos não são exportados. Cotas, bloqueios e exigência de login podem impedir downloads.
+- O atalho pode falhar quando `/user/app` não existe ou a exportação individual do serviço está indisponível. Isso não impede o servidor de iniciar.
+- As APIs locais não possuem autenticação nem validação de origem equivalente à do Payload Manager recente. Use em rede local confiável e não exponha a porta 7070 à internet.
+- Enviar o ELF ao loader não comprova inicialização, HTTPS, armazenamento ou comportamento após standby.
+
+Ao abrir uma [issue](https://github.com/louro2023/HLDRIVE/issues), informe versão, firmware, loader, ação realizada e mensagem completa. Remova links privados, tokens e dados pessoais dos logs.
+
+## Licença e créditos
+
+Código sob [GNU GPL v3](LICENSE). Componentes de terceiros mantêm suas licenças, incluindo condições próprias do UnRAR: [avisos de terceiros](THIRD_PARTY_NOTICES.md). O código-fonte acompanha a distribuição do ELF.
+
+- [ProsperoMgr](https://github.com/notmaj0r/ProsperoMgr), de maj0r: base da interface e gerenciador de arquivos, commit `9dd11c5efc7f36bb85b3319348434e071ac99b21`.
+- [PS5 Payload SDK](https://github.com/ps5-payload-dev/sdk): toolchain, runtime e exemplo de abertura do navegador.
+- [ps5-browser-app](https://github.com/kvnhrt/ps5-browser-app): referência de registro individual do atalho.
+- [gdown](https://github.com/wkentaro/gdown): referência pública do fluxo de confirmação; a integração C++ do HLDRIVE é própria.
+- [Payload Manager](https://github.com/itsPLK/ps5-payload-manager) e [Relapse](https://github.com/soniciso1/relapse): referências do fluxo de carregamento.
+- Overdrive foi referência documental; seu navegador/código não está incorporado.
+
+Projeto independente, sem afiliação com Sony/PlayStation ou Google. Artes geradas para o HLDRIVE; originais em `assets/branding`.
