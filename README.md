@@ -16,6 +16,12 @@ O HLDRIVE combina uma interface baseada no [ProsperoMgr](https://github.com/notm
 
 ## Funcionalidades
 
+Veja a **[galeria de telas simuladas com a identidade HLDRIVE](docs/GALLERY.md)**: escolha do destino, transferência, arquivos locais, confirmação de exclusão e encerramento. A logo e o banner já estão incorporados ao ELF v0.2.0.
+
+![Escolha do destino no console — simulação](docs/images/destino.png)
+
+![Transferência — simulação](docs/images/transferencia.png)
+
 - Abrir links de pastas públicas do Drive e navegar por subpastas.
 - Selecionar arquivos/pastas e escolher o destino no PS5.
 - Usar **Baixar selecionados** ou **Copiar → Colar no console**.
