@@ -36,7 +36,7 @@ O teste do botão Drive cobre ausência de acesso automático, envio da URL info
 
 ## Ainda pendente no console
 
-1. Carregar pelo elfldr no firmware 12.40 e confirmar abertura do navegador.
+1. Carregar pelo elfldr no firmware 12.40 e confirmar abertura do navegador; repetir a validação separadamente no 13.60.
 2. Listar uma pasta pública e baixar um arquivo pequeno autorizado; comparar tamanho e hash.
 3. Repetir com confirmação de arquivo grande, cancelamento, indisponibilidade de rede e pouco espaço.
 4. Validar botões físicos, teclado, diretórios externos e comportamento após standby.
@@ -45,4 +45,4 @@ O teste do botão Drive cobre ausência de acesso automático, envio da URL info
 
 **O erro `HTTP 0, transporte 2` não está confirmado como resolvido em hardware.** As mudanças melhoram configuração, recuperação e diagnóstico. HTTP 0 indica que não houve resposta HTTP válida; o código de transporte sozinho não determina a causa. É necessário coletar a mensagem completa, etapa, código SCE e detalhes TLS no console.
 
-Nenhuma homologação de toda a faixa de firmwares até 13.60 é declarada.
+É possível que o HLDRIVE também rode no firmware 13.60, porém ainda não foi testado nessa versão. O suporte encontrado no SDK e nos loaders é evidência de viabilidade, não um resultado de teste do HLDRIVE. Nenhuma homologação de toda a faixa de firmwares até 13.60 é declarada.

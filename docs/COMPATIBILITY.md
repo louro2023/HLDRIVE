@@ -4,6 +4,10 @@ HLDRIVE é um payload ELF64 x86-64, não um pacote instalável de jogo. Precisa 
 
 ## elfldr
 
+**Firmware 13.60: é possível que o HLDRIVE rode, porém ainda não foi testado nessa versão.** A análise técnica é favorável, mas não equivale a homologação. O [SDK v0.44 usado na compilação](https://github.com/ps5-payload-dev/sdk/blob/v0.44/crt/kernel.c) contém tratamento explícito para `0x13600000` (13.60). A [release v0.5.2 do Payload Manager](https://github.com/itsPLK/ps5-payload-manager/releases/tag/v0.5.2) também declara recompilação com suporte a esse firmware.
+
+Ainda é necessário verificar no 13.60: inicialização do ELF, privilégios e arquivos locais, HTTPS e downloads do Drive, abertura do navegador, navegação pelo controle e registro/remoção do atalho. Suporte no SDK ou no loader não confirma esses recursos no HLDRIVE.
+
 O ELF é destinado ao fluxo de envio ao elfldr, normalmente TCP 9021. O alvo inicial é o firmware 12.40. A execução, rede HTTPS e interface ainda precisam de teste real. HLDRIVE não fornece exploit nem desbloqueia firmwares.
 
 ## Payload Manager

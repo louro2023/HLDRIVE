@@ -1,5 +1,10 @@
 # Histórico de alterações
 
+## Atualização da documentação — 2026-10-14
+
+- Esclarecida a possibilidade de execução no firmware 13.60, com base no suporte do SDK e dos loaders. O HLDRIVE ainda não foi testado nessa versão.
+- README, compatibilidade, plano de testes e notas da release atualizados. Esta revisão documental não altera o ELF v0.2.0.
+
 ## v0.2.0 — 2026-10-14 — primeira publicação experimental
 
 ### Interface

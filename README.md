@@ -40,13 +40,13 @@ Veja a **[galeria de telas simuladas com a identidade HLDRIVE](docs/GALLERY.md)*
 - Internet para acessar o Drive e espaço suficiente no destino.
 - Pasta compartilhada como **“Qualquer pessoa com o link”**. Não há login Google/OAuth.
 
-O alvo inicial de testes é **firmware 12.40 com elfldr**. Suporte até 13.60 e versões anteriores é um objetivo, **não uma faixa homologada**.
+O alvo inicial de testes é **firmware 12.40 com elfldr**. **É possível que o HLDRIVE também rode no firmware 13.60, porém ainda não foi testado nessa versão.** O SDK v0.44 utilizado contém suporte ao 13.60, e os projetos de referência oferecem caminhos de carregamento para esse firmware. Essa evidência não confirma o funcionamento do HLDRIVE, dos downloads ou do controle no console; não há uma faixa de firmwares homologada.
 
 | Ambiente | Situação |
 | --- | --- |
 | elfldr | ELF64 x86-64 e envio pela porta usual 9021; execução real ainda requer teste. |
 | Payload Manager | Fluxo de importação/envio ao elfldr compatível por análise do código. HLDRIVE não está no catálogo padrão. |
-| Relapse | Usa elfldr em 9021 e declara suporte ao 12.40; isso não certifica HLDRIVE. Seu menu padrão não inclui HLDRIVE. |
+| Relapse | Usa elfldr em 9021 e declara suporte ao 12.40 e 13.60; isso não certifica HLDRIVE. Seu menu padrão não inclui HLDRIVE. |
 | Outros loaders | Não homologados nesta versão. |
 
 [Detalhes de compatibilidade](docs/COMPATIBILITY.md). O HLDRIVE não executa um exploit nem acrescenta suporte de jailbreak a um firmware.
