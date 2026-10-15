@@ -83,6 +83,24 @@ for (const file of files) {
 }
 
 console.log('')
+// HLDRIVE-specific screens have three supported dictionaries. Inherited dictionaries
+// above remain checked separately for the reusable Prospero components.
+const hldriveDir = path.join(LOCALES_DIR, 'hldrive')
+const hldriveBase = JSON.parse(readFileSync(path.join(hldriveDir, CANONICAL), 'utf8'))
+const placeholders = (value) => [...value.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort().join(',')
+for (const locale of ['pt-BR', 'en-US', 'es-AR']) {
+  const messages = JSON.parse(readFileSync(path.join(hldriveDir, `${locale}.json`), 'utf8'))
+  if (Object.keys(messages).sort().join(',') !== Object.keys(hldriveBase).sort().join(',')) {
+    console.error(`HLDRIVE ${locale}: translation keys differ`)
+    ok = false
+  }
+  for (const [key, value] of Object.entries(hldriveBase)) {
+    if (typeof messages[key] !== 'string' || !messages[key].trim() || placeholders(value) !== placeholders(messages[key])) {
+      console.error(`HLDRIVE ${locale}: missing text or incompatible placeholders in ${key}`)
+      ok = false
+    }
+  }
+}
 if (!ok) {
   console.error('check:i18n FAILED — fix the issues above.')
   process.exit(1)

@@ -1,5 +1,15 @@
 # Histórico de alterações
 
+## v1.0.2 — 2026-10-15
+
+- Adicionado seletor de idioma com bandeiras SVG para Português (Brasil), English (US) e Español (Argentina).
+- Traduzidas as telas próprias do HLDRIVE, incluindo Drive, filas, confirmações e mensagens de encerramento; arquivos locais reutilizam o sistema de traduções do Prospero.
+- Preferência salva por navegador e troca imediata preservando os itens selecionados.
+- Foco do controle limitado ao menu de idiomas aberto; navegação por teclado, Tab e fechamento com Escape/○.
+- Adicionados testes de troca de idioma, persistência, parâmetros das mensagens, diálogos, bandeiras e layout móvel.
+- Unificada a versão 1.0.2 na interface, API e metadados de mídia. Ajustada a verificação de checksum das dependências para aceitar BusyBox.
+- Testes de interface usam dados simulados; a nova seleção de idiomas ainda precisa de confirmação no PS5. Diagnósticos retornados pelo backend preservam seu texto original.
+
 ## v1.0.1 — 2026-10-15
 
 - Aumentada a velocidade de download de arquivos grandes com até oito conexões de intervalo para um mesmo arquivo, quando o Google Drive oferece suporte seguro a essa modalidade.

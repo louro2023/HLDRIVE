@@ -7,7 +7,7 @@ export function useConsoleNavigation() {
     document.body.classList.add('hldrive-console')
     const selector = 'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]'
     const targets = () => {
-      const dialogs = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"]')].filter(e => e.getClientRects().length)
+      const dialogs = [...document.querySelectorAll('[role="dialog"], [role="alertdialog"], [role="menu"]')].filter(e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden')
       return [...(dialogs.pop() || document).querySelectorAll(selector)].filter(e => e.getClientRects().length && !e.closest('[hidden], [inert]'))
     }
     function move(key) {
@@ -32,6 +32,8 @@ export function useConsoleNavigation() {
     }
     function keyboard(e) {
       if (!e.key.startsWith('Arrow') || e.altKey || e.ctrlKey || e.metaKey) return
+      // Menus own their arrow-key ordering and wrapping.
+      if (e.target.closest('[role="menu"]')) return
       // Native editing/select menus retain their arrows; Tab leaves the field.
       if (e.target.matches('input:not([type="checkbox"]),textarea,select')) return
       e.preventDefault(); e.stopImmediatePropagation(); move(e.key)

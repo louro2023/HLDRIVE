@@ -4,13 +4,15 @@
 
 Gerenciador de arquivos homebrew para PS5, com navegação em pastas públicas do Google Drive e download direto para o console. Interface, imagens e recursos estão incorporados em um único arquivo `HLDRIVE.elf`.
 
-> **Versão 1.0.1 — testada pelo usuário no PS5.** O usuário confirmou que o download ficou muito mais rápido, ultrapassando 500 Mb/s em seu teste. A velocidade depende da rede, do PS5 e da resposta do Google Drive.
+> **Versão 1.0.2 — seleção de idiomas com bandeiras.** A base 1.0.1 teve downloads confirmados pelo usuário no PS5, acima de 500 Mb/s em seu teste. A mudança de idiomas da 1.0.2 foi validada em navegador com APIs e controle simulados; ainda precisa de confirmação no console. A velocidade depende da rede, do PS5 e da resposta do Google Drive.
 
-**Downloads:** [ELF 1.0.1](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.1/HLDRIVE.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.1/HLDRIVE.elf.sha256) · [Release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.1)
+**Downloads:** [ELF 1.0.2](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf.sha256) · [Release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.2)
 
 Veja a [galeria de telas](docs/GALLERY.md), [histórico de alterações](CHANGELOG.md) e [instruções de compilação](docs/BUILD.md).
 
 ## Funcionalidades
+
+- Selecionar Português (Brasil), English (US) ou Español (Argentina) pelo botão de bandeira no topo da interface.
 
 - Abrir links públicos do Drive e navegar por subpastas.
 - Selecionar arquivos e pastas e escolher o destino no PS5.
@@ -23,6 +25,14 @@ Veja a [galeria de telas](docs/GALLERY.md), [histórico de alterações](CHANGEL
 - Exibir QR codes discretos para inscrição no [canal do criador](https://www.youtube.com/@henriquelouro7848) e apoio financeiro.
 
 O console acessa o Drive e realiza os downloads. É necessária uma pasta compartilhada como “Qualquer pessoa com o link”; não há login Google/OAuth.
+
+## Idioma da interface
+
+Clique na **bandeira no canto superior direito** e selecione Português (Brasil), English (US) ou Español (Argentina). O seletor reaproveita o estilo do Prospero Manager e usa bandeiras SVG incorporadas ao ELF, sem depender de emojis ou imagens externas.
+
+A mudança é imediata e preserva a seleção de arquivos. A preferência fica salva no navegador/dispositivo usado para acessar o HLDRIVE; outro navegador pode ter uma escolha diferente. O padrão é Português (Brasil).
+
+Menus, tela do Drive, transferências, gerenciador de arquivos e diálogos acompanham o idioma. Nomes de arquivos, caminhos e mensagens técnicas retornadas pelo backend são preservados; alguns diagnósticos podem continuar em português. [Veja as telas simuladas](docs/GALLERY.md).
 
 ## Requisitos e primeiro uso
 

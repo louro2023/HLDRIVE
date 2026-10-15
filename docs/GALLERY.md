@@ -1,5 +1,23 @@
 # Galeria da interface HLDRIVE
 
+## Idiomas — v1.0.2
+
+Novas capturas com dados simulados, sem execução no PS5. A bandeira no topo permite mudar o idioma; a escolha fica salva no navegador.
+
+### English (US)
+
+![Interface em inglês dos Estados Unidos](images/language-en-US.png)
+
+### Español (Argentina)
+
+![Interface em espanhol da Argentina](images/language-es-AR.png)
+
+### Seletor com bandeiras em tela pequena
+
+<img src="images/language-picker-mobile.png" width="390" alt="Seletor com bandeiras do Brasil, Estados Unidos e Argentina">
+
+## Capturas anteriores
+
 Capturas da interface real do projeto executada no Chrome, com APIs, arquivos, conexão e controle simulados. Não são capturas do PS5 e não comprovam downloads no console. Nenhum arquivo do Google Drive foi baixado para gerar estas imagens.
 
 A logo criada para HLDRIVE aparece no menu lateral; a arte hero identifica o banner. A capa aparece ao encerrar. Esses recursos fazem parte do ELF 1.0.1, sem necessidade de arquivos de imagem separados. Veja o [mapa das artes](../assets/branding/README.md).

@@ -60,6 +60,15 @@ export default function LanguagePicker() {
   }, [open])
 
   const onMenuKeyDown = (event) => {
+    if (event.key === 'Tab') {
+      const items = Array.from(menuRef.current?.querySelectorAll('[role="menuitemradio"]') || [])
+      if (items.length) {
+        event.preventDefault()
+        const next = (items.indexOf(document.activeElement) + (event.shiftKey ? -1 : 1) + items.length) % items.length
+        items[next].focus()
+      }
+      return
+    }
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
     const items = Array.from(menuRef.current?.querySelectorAll('[role="menuitemradio"]') || [])
     if (items.length === 0) return

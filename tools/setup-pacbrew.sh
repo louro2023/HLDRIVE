@@ -14,10 +14,10 @@ if [[ -f "$marker" && "$(cat "$marker")" == "$expected" && -f "$prefix/lib/libcu
     touch "$cache/.complete"
     exit 0
 fi
-if [[ ! -f "$archive" ]] || ! printf '%s  %s\n' "$hash" "$archive" | sha256sum --check --strict >/dev/null 2>&1; then
+if [[ ! -f "$archive" ]] || ! printf '%s  %s\n' "$hash" "$archive" | sha256sum -c >/dev/null 2>&1; then
     temporary="$archive.download"
     curl -fL --retry 3 "https://github.com/ps5-payload-dev/pacbrew-repo/releases/download/$version/ps5-payload-dev.tar.gz" -o "$temporary"
-    printf '%s  %s\n' "$hash" "$temporary" | sha256sum --check --strict
+    printf '%s  %s\n' "$hash" "$temporary" | sha256sum -c
     mv "$temporary" "$archive"
 fi
 mkdir -p "$sdk/target"
