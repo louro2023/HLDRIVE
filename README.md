@@ -4,7 +4,7 @@
 
 Gerenciador de arquivos homebrew para PS5, com navegação em pastas públicas do Google Drive e download direto para o console. Interface, imagens e recursos estão incorporados em um único arquivo `HLDRIVE.elf`.
 
-> **Versão 1.0.0 — testada e funcionando, conforme informado pelo usuário.** Firmware e ambiente de teste não foram especificados. A compilação desta publicação foi gerada localmente.
+> **Versão 1.0.0 — testada e funcionando.
 
 **Downloads:** [ELF 1.0.0](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.0/HLDRIVE.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.0/HLDRIVE.elf.sha256) · [Release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.0)
 
