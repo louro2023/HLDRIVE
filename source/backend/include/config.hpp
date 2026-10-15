@@ -7,7 +7,7 @@
 
 namespace prospero {
 
-inline constexpr const char *kVersion = "0.1.0";
+inline constexpr const char *kVersion = "0.2.2";
 inline constexpr const char *kAuthor = "HLDRIVE contributors; file manager based on ProsperoMgr by maj0r";
 
 struct Config {
@@ -18,7 +18,7 @@ struct Config {
     std::string tmp_dir;        // <root>/tmp — scratch space for FTP upload/download bridging
     std::string log_file;       // <root>/hldrive.log — survives a payload restart
 
-    static constexpr uint16_t kHttpPort = 7070;
+    static constexpr uint16_t kHttpPort = 8081;
 
     // elfldr wire protocol — same port across the whole ecosystem, don't change.
     static constexpr const char *kElfldrHost = "127.0.0.1";

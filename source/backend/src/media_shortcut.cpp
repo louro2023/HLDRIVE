@@ -1,5 +1,4 @@
-// Registration ABI and deeplink metadata researched in kvnhrt/ps5-browser-app
-// (GPLv3), src/app_installer.c. No global AppInstallAll fallback is used here.
+// Registration flow based on ps5-payload-dev/ftpsrv and itsPLK/ps5-payload-manager.
 #include "lifecycle.hpp"
 #include <ps5/kernel.h>
 #include <sys/stat.h>
@@ -15,6 +14,7 @@
 extern "C" int sceAppInstUtilInitialize(void);
 extern "C" int sceAppInstUtilTerminate(void);
 extern "C" int sceAppInstUtilAppUnInstall(const char *);
+extern "C" int sceAppInstUtilAppInstallAll(void *);
 asm(".pushsection .rodata\n"
     ".global hldrive_param_start, hldrive_param_end, hldrive_icon_start, hldrive_icon_end\n"
     "hldrive_param_start:\n.incbin \"source/launcher/param.json\"\nhldrive_param_end:\n"
@@ -60,11 +60,11 @@ struct Service {
 }
 bool InstallMediaShortcut(std::string *error) {
     try {
-        Service service; uint32_t handle;
-        if(kernel_dynlib_handle(-1,"libSceAppInstUtil.sprx",&handle)) throw std::runtime_error("AppInstUtil indisponível neste ambiente.");
+        Service service; uint32_t handle=0;
         using Install=int(*)(const char *,const char *,void *);
-        auto install=reinterpret_cast<Install>(kernel_dynlib_resolve(-1,handle,"Wudg3Xe3heE"));
-        if(!install)throw std::runtime_error("Registro individual de título não suportado neste firmware/loader.");
+        Install install=nullptr;
+        if(!kernel_dynlib_handle(-1,"libSceAppInstUtil.sprx",&handle))
+            install=reinterpret_cast<Install>(kernel_dynlib_resolve(-1,handle,"Wudg3Xe3heE"));
         RealDirectory("/user"); RealDirectory("/user/app");
         if(fs::symlink_status(root).type()==fs::file_type::not_found) {
             if(!fs::create_directory(root))throw std::runtime_error("Não foi possível criar o diretório do atalho.");
@@ -75,8 +75,13 @@ bool InstallMediaShortcut(std::string *error) {
         Write(fs::path(root)/"sce_sys/param.json",hldrive_param_start,hldrive_param_end-hldrive_param_start);
         Write(fs::path(root)/"sce_sys/icon0.png",hldrive_icon_start,hldrive_icon_end-hldrive_icon_start);
         Write(fs::path(root)/"eboot.bin","",0);
-        int rc=install(title,"/user/app/",nullptr);
-        if(rc)throw std::runtime_error(Code("AppInstallTitleDir",rc));
+        int rc=install ? install(title,"/user/app/",nullptr) : sceAppInstUtilAppInstallAll(nullptr);
+        if(rc && install) {
+            const int fallback=sceAppInstUtilAppInstallAll(nullptr);
+            if(fallback)throw std::runtime_error(Code("AppInstallTitleDir",rc)+"; "+Code("AppInstallAll",fallback));
+        } else if(rc) {
+            throw std::runtime_error(Code("AppInstallAll",rc));
+        }
         return true;
     }catch(const std::exception &e){*error=e.what();return false;}
 }

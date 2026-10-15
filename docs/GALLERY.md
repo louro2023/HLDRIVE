@@ -2,7 +2,7 @@
 
 Capturas da interface real do projeto executada no Chrome, com APIs, arquivos, conexão e controle simulados. Não são capturas do PS5 e não comprovam downloads no console. Nenhum arquivo do Google Drive foi baixado para gerar estas imagens.
 
-A logo criada para HLDRIVE aparece no menu lateral; a arte hero identifica o banner. A capa aparece ao encerrar. Esses recursos fazem parte do ELF v0.2.1, sem necessidade de arquivos de imagem separados. Veja o [mapa das artes](../assets/branding/README.md).
+A logo criada para HLDRIVE aparece no menu lateral; a arte hero identifica o banner. A capa aparece ao encerrar. Esses recursos fazem parte do ELF v0.2.2, sem necessidade de arquivos de imagem separados. Veja o [mapa das artes](../assets/branding/README.md).
 
 ## Pasta pública do Drive
 

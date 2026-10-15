@@ -6,7 +6,7 @@
 
 O HLDRIVE combina uma interface baseada no [ProsperoMgr](https://github.com/notmaj0r/ProsperoMgr) com um backend nativo em C++ e uma integração própria com o Google Drive. Interface, imagens e recursos ficam incorporados em um único `HLDRIVE.elf`.
 
-> **v0.2.1 — versão experimental.** O acesso ao Google Drive foi migrado para libcurl/OpenSSL no PS5, com validação de certificados usando a lista de CAs do sistema e resolução DNS pelo serviço de rede do console. A compilação passou; listagem e downloads reais ainda precisam ser validados em um PS5. Não desative a validação TLS.
+> **v0.2.2 — versão de teste.** O usuário confirmou que a versão 0.2.1 está funcionando no PS5. Esta atualização muda a interface para a porta 8081 e reforça o registro do atalho de mídia com miniatura. Essas duas mudanças novas precisam ser verificadas no console.
 
 **ELF de teste:** `build/HLDRIVE.elf` (gerado localmente) · [Como compilar](docs/BUILD.md) · [Atualizações](CHANGELOG.md)
 
@@ -16,7 +16,7 @@ O HLDRIVE combina uma interface baseada no [ProsperoMgr](https://github.com/notm
 
 ## Funcionalidades
 
-Veja a **[galeria de telas simuladas com a identidade HLDRIVE](docs/GALLERY.md)**: escolha do destino, transferência, arquivos locais, confirmação de exclusão e encerramento. A logo e o banner estão incorporados ao ELF v0.2.1.
+Veja a **[galeria de telas simuladas com a identidade HLDRIVE](docs/GALLERY.md)**: escolha do destino, transferência, arquivos locais, confirmação de exclusão e encerramento. A logo e o banner estão incorporados ao ELF v0.2.2.
 
 ![Escolha do destino no console — simulação](docs/images/destino.png)
 
@@ -53,15 +53,15 @@ O alvo inicial de testes é **firmware 12.40 com elfldr**. **É possível que o 
 
 ## Instalação e primeiro uso
 
-1. Use **somente `build/HLDRIVE.elf`**, gerado conforme [as instruções de compilação](docs/BUILD.md). O repositório ainda não tem um anexo binário publicado para a v0.2.1.
+1. Use **somente `build/HLDRIVE.elf`**, gerado conforme [as instruções de compilação](docs/BUILD.md). O repositório ainda não tem um anexo binário publicado para a v0.2.2.
 2. Inicie o ambiente homebrew e o elfldr no PS5.
 3. Envie o ELF pelo loader, normalmente na porta **9021**, ou importe e execute pelo Payload Manager.
-4. O payload tenta abrir `http://127.0.0.1:7070/?console=1` no navegador do console. Se não abrir, acesse **`http://IP_DO_PS5:7070`** de outro dispositivo na mesma rede.
+4. O payload tenta abrir `http://127.0.0.1:8081/?console=1` no navegador do console. Se não abrir, acesse **`http://IP_DO_PS5:8081`** de outro dispositivo na mesma rede.
 5. Na aba **Google Drive**, cole o link público e pressione **Abrir pasta**. A conexão e a transferência são feitas pelo próprio PS5.
 
 O atalho na aba Mídia abre a interface enquanto o payload está rodando. **Ele não carrega o ELF após reiniciar ou encerrar.** Execute novamente pelo loader ou configure o autoload no Payload Manager.
 
-Encerre uma versão anterior antes de carregar a nova. Outra aplicação usando a porta 7070 também impede o servidor de iniciar.
+Encerre uma versão anterior antes de carregar a nova. Outra aplicação usando a porta 8081 também impede o servidor de iniciar.
 
 ## Escolher onde salvar
 
@@ -108,7 +108,7 @@ Para atualizar: encerre a versão antiga, substitua/importe o ELF da nova releas
 ```mermaid
 flowchart LR
     L[elfldr / Payload Manager] --> E[HLDRIVE.elf]
-    E --> H[Servidor local :7070]
+    E --> H[Servidor local :8081]
     B[Navegador PS5 ou dispositivo na LAN] --> H
     H --> D[Listagem e fila do Drive]
     D --> G[Google Drive via HTTPS]
@@ -131,7 +131,7 @@ Veja [arquitetura](docs/ARCHITECTURE.md), [compilação](docs/BUILD.md) e [teste
 - Até **32 itens ativos** na fila; tarefas de pasta limitadas a **32 níveis e 10.000 itens**. Transferências sequenciais; navegação remota bloqueada enquanto há fila ativa.
 - Documentos nativos do Google e atalhos não são exportados. Cotas, bloqueios e exigência de login podem impedir downloads.
 - O atalho pode falhar quando `/user/app` não existe ou a exportação individual do serviço está indisponível. Isso não impede o servidor de iniciar.
-- As APIs locais não possuem autenticação nem validação de origem equivalente à do Payload Manager recente. Use em rede local confiável e não exponha a porta 7070 à internet.
+- As APIs locais não possuem autenticação nem validação de origem equivalente à do Payload Manager recente. Use em rede local confiável e não exponha a porta 8081 à internet.
 - Enviar o ELF ao loader não comprova inicialização, HTTPS, armazenamento ou comportamento após standby.
 
 Ao abrir uma [issue](https://github.com/louro2023/HLDRIVE/issues), informe versão, firmware, loader, ação realizada e mensagem completa. Remova links privados, tokens e dados pessoais dos logs.

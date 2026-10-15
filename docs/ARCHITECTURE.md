@@ -4,7 +4,7 @@ O ELF reúne backend C/C++, servidor HTTP e frontend React. O próprio payload P
 
 ## Inicialização
 
-O processo prepara /data/HLDRIVE, inicia filas e rotas HTTP na porta 7070 e tenta registrar o atalho HLDR00001. A interface pode ser aberta no navegador do console ou em outro dispositivo da mesma rede. As chamadas de rede ao Drive são executadas pelo payload no PS5.
+O processo prepara /data/HLDRIVE, inicia filas e rotas HTTP na porta 8081 e registra/atualiza o atalho HLDR00001 na aba Mídia. O servidor inicia antes do registro para que o destino do atalho já esteja disponível. A interface pode ser aberta no navegador do console ou em outro dispositivo da mesma rede. As chamadas de rede ao Drive são executadas pelo payload no PS5.
 
 ## Google Drive
 
@@ -26,10 +26,10 @@ O navegador controla as operações por `/api/...`. `/api/status` informa o esta
 
 A exclusao pre-valida `/data/HLDRIVE`, apaga toda a arvore sem seguir links simbolicos nem atravessar montagens, e remove `HLDRIVE.elf` da pasta de payloads configurada quando externa. Downloads fora da arvore e outros payloads sao preservados.
 
-O título HLDR00001, em `/user/app/HLDR00001`, é um atalho de navegador para o servidor local. Ele não é um loader nem reinicia o ELF. Seu registro individual usa o serviço AppInstUtil, quando disponível.
+O título HLDR00001, em `/user/app/HLDR00001`, é um atalho de navegador para o servidor local. Ele não é um loader nem reinicia o ELF. O registro usa `sceAppInstUtilAppInstallTitleDir`; se essa exportação não estiver disponível, usa `sceAppInstUtilAppInstallAll`, seguindo os caminhos usados por ftpsrv e Payload Manager. O `param.json` classifica o título como Media (`applicationCategoryType: 65536`) e aponta para `/user/app/HLDR00001/sce_sys/icon0.png`.
 
 ## Limites de segurança e validação
 
-As APIs não possuem autenticação nem proteção completa contra requisições de outras origens. A porta 7070 deve permanecer numa rede confiável. As verificações de arquivos e confirmações de interface não substituem autenticação.
+As APIs não possuem autenticação nem proteção completa contra requisições de outras origens. A porta 8081 deve permanecer numa rede confiável. As verificações de arquivos e confirmações de interface não substituem autenticação.
 
 Testes simulados verificam lógica, erros e preservação de arquivos. Eles não comprovam TLS, certificados, serviços do sistema, permissões ou comportamento do navegador no hardware. Consulte [TESTING.md](TESTING.md).

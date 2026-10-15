@@ -14,7 +14,7 @@ O ELF é destinado ao fluxo de envio ao elfldr, normalmente TCP 9021. O alvo ini
 
 A análise tomou como referência [ps5-payload-manager](https://github.com/itsPLK/ps5-payload-manager), commit `fe5ca8121c1195f813bba9bc032cba0086b74ff2`, versão 0.6.0.
 
-O manager envia ELF ao elfldr em localhost:9021 e mantém seus próprios arquivos em `/data/pldmgr`. HLDRIVE usa HTTP 7070 e dados em `/data/HLDRIVE`, sem conflito nominal com HTTP 8084 do manager. Importe o ELF pelo fluxo do manager; apenas colocá-lo em `/data/HLDRIVE` não o adiciona automaticamente à biblioteca.
+O manager envia ELF ao elfldr em localhost:9021 e mantém seus próprios arquivos em `/data/pldmgr`. HLDRIVE usa HTTP 8081 e dados em `/data/HLDRIVE`, sem conflito nominal com HTTP 8084 do manager. Importe o ELF pelo fluxo do manager; apenas colocá-lo em `/data/HLDRIVE` não o adiciona automaticamente à biblioteca.
 
 O ELF é compatível com esse fluxo por análise estrutural. Não há entrada HLDRIVE no catálogo padrão nem teste de integração no console. Autoload é responsabilidade do manager. A ação Excluir HLDRIVE não apaga a cópia do ELF nem a configuração de autoload mantidas por ele.
 
@@ -28,6 +28,6 @@ Fluxo previsto: **Relapse → elfldr → Payload Manager → HLDRIVE**, ou envio
 
 ## Atalho de mídia
 
-O título próprio `HLDR00001` abre o servidor do HLDRIVE no navegador; não executa o ELF. Depende do serviço de instalação individual e de `/user/app` disponível. Falha nesse registro não comprova incompatibilidade do transporte elfldr e não impede, por si só, o início do servidor HTTP.
+O título próprio `HLDR00001` abre o servidor do HLDRIVE no navegador; não executa o ELF. O registro inicia após o servidor HTTP na porta 8081 e usa `AppInstallTitleDir`, com fallback `AppInstallAll` conforme os exemplos do ftpsrv e Payload Manager. O ícone vem de `source/launcher/icon0.png` e a categoria Mídia é definida no `source/launcher/param.json`. Se um atalho antigo tiver ficado parcialmente registrado, remova HLDRIVE em Armazenamento → Jogos e aplicativos e execute o ELF atualizado uma vez para reconstruí-lo.
 
 Nenhuma garantia de compatibilidade universal é feita. Consulte [TESTING.md](TESTING.md) para distinguir verificação local e testes ainda pendentes.

@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: process.env.PROSPEROMGR_BACKEND || 'http://127.0.0.1:7070',
+        target: process.env.PROSPEROMGR_BACKEND || 'http://127.0.0.1:8081',
         changeOrigin: true,
       },
     },

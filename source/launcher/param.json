@@ -1,7 +1,7 @@
 {
   "titleId": "HLDR00001",
   "contentId": "IV9999-HLDR00001_00-HLDRIVELAUNCH001",
-  "contentVersion": "01.000.000",
+  "contentVersion": "01.000.001",
   "masterVersion": "01.00",
   "applicationCategoryType": 65536,
   "applicationDrmType": "free",
@@ -13,7 +13,7 @@
   "ageLevel": {"default": 0},
   "requiredSystemSoftwareVersion": "0x0000000000000000",
   "sdkVersion": "0x0000000000000000",
-  "deeplinkUri": "http://127.0.0.1:7070/?console=1",
+  "deeplinkUri": "http://127.0.0.1:8081/?console=1",
   "localizedParameters": {
     "defaultLanguage": "en-US",
     "en-US": {"titleName": "HLDRIVE"},

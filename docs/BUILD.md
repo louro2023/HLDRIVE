@@ -2,7 +2,7 @@
 
 ## Ambiente de referência
 
-A versão v0.2.1 foi compilada com PS5 Payload SDK v0.44 e LLVM/Clang 20 em WSL2. Além de Node.js/npm, Python 3 e GNU Make, o build prepara libcurl/OpenSSL e suas dependências para o alvo PS5 usando PacBrew (versão e hash fixados pelo script). O servidor usa libmicrohttpd 1.0.2 estática. Os testes nativos também precisam de GCC/G++ com C++20.
+A versão v0.2.2 é compilada com PS5 Payload SDK v0.44 e LLVM/Clang 20 em WSL2. Além de Node.js/npm, Python 3 e GNU Make, o build prepara libcurl/OpenSSL e suas dependências para o alvo PS5 usando PacBrew (versão e hash fixados pelo script). O servidor usa libmicrohttpd 1.0.2 estática. Os testes nativos também precisam de GCC/G++ com C++20.
 
 Instale o [PS5 Payload SDK](https://github.com/ps5-payload-dev/sdk) seguindo suas instruções. Os scripts locais esperam o SDK em `/opt/ps5-payload-sdk`. Eles não instalam nem configuram automaticamente uma distribuição WSL.
 

@@ -20,6 +20,7 @@
 #include <thread>
 
 #include "assets.hpp"
+#include "config.hpp"
 #include "file_jobs.hpp"
 #include "file_manager.hpp"
 #include "jailbreak.hpp"
@@ -260,7 +261,7 @@ std::string GuessContentType(const std::string &filename) {
 
 void RegisterFileRoutes(HttpServer *server, const Config &cfg) {
     server->Route("GET", "/api/status", [](const HttpRequest &) {
-        return HttpResponse::Json(JsonWriter().Str("name", "HLDRIVE").Str("version", "0.2.1").Done());
+        return HttpResponse::Json(JsonWriter().Str("name", "HLDRIVE").Str("version", kVersion).Done());
     });
     server->Route("GET", "/api/ftp/status", [](const HttpRequest &) {
         std::vector<FileManagerEntry> probe;

@@ -1,5 +1,22 @@
 # Histórico de alterações
 
+## v0.2.2 — 2026-10-14 — porta 8081 e atalho de mídia
+
+### Rede
+
+- Alterada a porta HTTP do HLDRIVE de 7070 para 8081, incluindo o servidor, link automático no PS5, atalho `HLDR00001`, proxy de desenvolvimento e documentação.
+
+### Atalho na aba Mídia
+
+- Preservada a categoria Mídia (`applicationCategoryType: 65536`) e o ícone `source/launcher/icon0.png` em `sce_sys/icon0.png`.
+- O registro continua tentando `AppInstallTitleDir` e agora usa `sceAppInstUtilAppInstallAll` como fallback, seguindo os exemplos do PS5 Payload SDK/ftpsrv e Payload Manager.
+- Registro ocorre após o servidor iniciar; versão de conteúdo do atalho incrementada para forçar a atualização dos metadados e miniatura.
+- Logs passam a confirmar sucesso ou apresentar o erro do registro no arquivo persistente do HLDRIVE.
+
+### Validação
+
+- O usuário confirmou que a versão v0.2.1 funciona no PS5. A porta 8081 e a alteração do registro/miniatura da v0.2.2 ainda precisam de validação no console.
+
 ## v0.2.1 — 2026-10-14 — transporte HTTPS experimental
 
 ### Google Drive e rede
@@ -14,7 +31,7 @@
 
 - Build reproduzível prepara libcurl e dependências PacBrew com hash SHA-256 fixado.
 - Atualizados os scripts de build Windows/WSL e a documentação de compilação, arquitetura e validação.
-- ELF compilado com sucesso. O acesso real ao Google, a listagem e o download ainda precisam de validação no console; esta versão não declara a falha TLS resolvida em hardware.
+- ELF compilado com sucesso. Na publicação, o acesso real ao Google ainda não havia sido validado. O usuário confirmou posteriormente que a v0.2.1 funciona no PS5.
 
 ## Atualização da documentação — 2026-10-14
 

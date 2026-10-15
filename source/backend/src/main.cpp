@@ -33,14 +33,19 @@ int main() {
     InitializeJobQueue();InitializeFileJobs(cfg);
     HttpServer server(Config::kHttpPort);RegisterFileRoutes(&server,cfg);RegisterDriveRoutes(&server,cfg);
     RegisterLifecycleRoutes(&server,cfg);
+    if(!server.Start()) {LogEvent("HLDRIVE: porta HTTP indisponível.");return 1;}
     const int user_service = sceUserServiceInitialize(nullptr);
     std::string shortcut_error;
     if(!InstallMediaShortcut(&shortcut_error))LogEvent("HLDRIVE atalho: "+shortcut_error);
-    if(!server.Start()) {LogEvent("HLDRIVE: porta 7070 indisponível.");return 1;}
+    else LogEvent("HLDRIVE: atalho da aba Mídia instalado/atualizado.");
     signal(SIGCONT,Resume);
-    LogEvent("HLDRIVE 0.2.1: http://<IP_DO_PS5>:7070");
+    char address[128];
+    std::snprintf(address,sizeof(address),"HLDRIVE %s: http://<IP_DO_PS5>:%u",kVersion,(unsigned)Config::kHttpPort);
+    LogEvent(address);
     // Same launch ABI as ps5-payload-dev/sdk samples/browser/main.c.
-    const int browser = sceSystemServiceLaunchWebBrowser("http://127.0.0.1:7070/?console=1", nullptr);
+    char browser_url[96];
+    std::snprintf(browser_url,sizeof(browser_url),"http://127.0.0.1:%u/?console=1",(unsigned)Config::kHttpPort);
+    const int browser = sceSystemServiceLaunchWebBrowser(browser_url, nullptr);
     if (user_service == 0) sceUserServiceTerminate();
     char launch_log[160];
     std::snprintf(launch_log, sizeof(launch_log), "HLDRIVE: browser launch result=0x%08x, user service=0x%08x", browser, user_service);
