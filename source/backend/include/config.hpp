@@ -7,8 +7,8 @@
 
 namespace prospero {
 
-inline constexpr const char *kVersion = "0.2.2";
-inline constexpr const char *kAuthor = "HLDRIVE contributors; file manager based on ProsperoMgr by maj0r";
+inline constexpr const char *kVersion = "1.0.0";
+inline constexpr const char *kAuthor = "HLDRIVE contributors";
 
 struct Config {
     std::string root_dir;

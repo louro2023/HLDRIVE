@@ -1,76 +1,33 @@
 # Histórico de alterações
 
-## v0.2.2 — 2026-10-14 — porta 8081 e atalho de mídia
+## v1.0.0 — 2026-10-15
 
-### Rede
+- Adicionados QR codes discretos para o canal do criador e apoio financeiro.
+- Incluída chamada para apoiar o projeto na interface.
+- Removidas referências promocionais a projetos e payloads externos da interface e da documentação de uso.
+- Atualizadas versões do aplicativo, do frontend e dos metadados do atalho de Mídia.
+- Mantida a porta HTTP 8081 e as funções de navegação, transferência e gerenciamento de arquivos.
+- O usuário informou que a versão 1.0.0 foi testada e funciona. A compilação desta publicação foi gerada localmente; esta preparação não realizou teste em hardware.
 
-- Alterada a porta HTTP do HLDRIVE de 7070 para 8081, incluindo o servidor, link automático no PS5, atalho `HLDR00001`, proxy de desenvolvimento e documentação.
+## v0.2.2 — 2026-10-14
 
-### Atalho na aba Mídia
+- Alterada a porta HTTP de 7070 para 8081 no servidor, abertura automática, atalho de Mídia e configuração de desenvolvimento.
+- Atualizado o registro do atalho para aplicar a categoria Mídia e a miniatura do HLDRIVE.
+- A versão 0.2.1 foi confirmada pelo usuário como funcionando no console.
 
-- Preservada a categoria Mídia (`applicationCategoryType: 65536`) e o ícone `source/launcher/icon0.png` em `sce_sys/icon0.png`.
-- O registro continua tentando `AppInstallTitleDir` e agora usa `sceAppInstUtilAppInstallAll` como fallback, seguindo os exemplos do PS5 Payload SDK/ftpsrv e Payload Manager.
-- Registro ocorre após o servidor iniciar; versão de conteúdo do atalho incrementada para forçar a atualização dos metadados e miniatura.
-- Logs passam a confirmar sucesso ou apresentar o erro do registro no arquivo persistente do HLDRIVE.
+## v0.2.1 — 2026-10-14
 
-### Validação
+- Substituído o transporte HTTPS nativo por libcurl/OpenSSL com validação de certificados usando as autoridades do sistema PS5.
+- Resolução de nomes respeita o DNS configurado no próprio console.
+- Atualizados scripts de compilação e documentação técnica.
+- Posteriormente, o usuário confirmou que esta versão funciona no PS5.
 
-- O usuário confirmou que a versão v0.2.1 funciona no PS5. A porta 8081 e a alteração do registro/miniatura da v0.2.2 ainda precisam de validação no console.
+## v0.2.0 — 2026-10-14
 
-## v0.2.1 — 2026-10-14 — transporte HTTPS experimental
+- Primeira publicação experimental com listagem de pastas públicas do Drive, escolha de destino e downloads no console.
+- Adicionadas operações locais de arquivos, navegação por controle e registro do atalho na aba Mídia.
+- Incluídos cancelamento, acompanhamento de progresso e confirmação para ações de manutenção.
 
-### Google Drive e rede
+## 0.1.0 — desenvolvimento local
 
-- Substituído o transporte HTTPS nativo SCE por libcurl/OpenSSL para acessar pastas públicas e baixar arquivos diretamente no PS5.
-- TLS continua validando certificado e hostname com as autoridades de `/system/common/cert/CA_LIST.cer`; não há modo inseguro que ignore certificados.
-- Resolução de nomes encaminhada ao `sceNetResolver`, respeitando o DNS configurado no próprio console.
-- Redirecionamentos de download limitados a hosts Google permitidos; respostas e transferências são limitadas e transmitidas em fluxo para o destino no PS5.
-- Diagnósticos atualizados para distinguir falhas de CA, validação TLS, DNS e conexão.
-
-### Build e validação
-
-- Build reproduzível prepara libcurl e dependências PacBrew com hash SHA-256 fixado.
-- Atualizados os scripts de build Windows/WSL e a documentação de compilação, arquitetura e validação.
-- ELF compilado com sucesso. Na publicação, o acesso real ao Google ainda não havia sido validado. O usuário confirmou posteriormente que a v0.2.1 funciona no PS5.
-
-## Atualização da documentação — 2026-10-14
-
-- Esclarecida a possibilidade de execução no firmware 13.60, com base no suporte do SDK e dos loaders. O HLDRIVE ainda não foi testado nessa versão.
-- Revisão documental histórica da versão v0.2.0.
-
-## v0.2.0 — 2026-10-14 — primeira publicação experimental
-
-### Interface
-
-- Google Drive e Arquivos do PS5 com base nos componentes do Prospero.
-- Solicitação de abertura no navegador do PS5, foco destacado, setas e gamepad padrão.
-- Artes incorporadas: ícone de mídia, favicon, miniatura no menu, banner e capa de encerramento.
-
-### Transferências
-
-- Listagem pública, subpastas, seleção e escolha de destino no console.
-- Fila sequencial, progresso, velocidade média, tempo estimado, cancelamento e limpeza de histórico.
-- Conflitos: pular, manter ambos ou parar o item.
-- SNI explícito, proxy automático desabilitado, conteúdo sem compressão e maior capacidade do contexto/cabeçalhos HTTP.
-- Uma repetição de conexão antes da gravação quando não há falha TLS identificada.
-- Códigos SCE/TLS e etapa preservados; tratamento de erros de confirmação, respostas truncadas e escrita interrompida.
-
-### Gerenciamento
-
-- Encerrar/excluir com confirmações distintas e bloqueio durante operações ativas.
-- Remoção limitada a arquivos reconhecidos, com verificações de propriedade e links.
-- Registro de HLDR00001 na aba Mídia e botão para repetir a tentativa.
-
-### Validação
-
-- Build com SDK v0.44; testes sintéticos de parser, fila, HTTP, ciclo de vida e proteção do atalho.
-- Testes Playwright de listagem, erros, navegação, copiar/colar e gerenciamento.
-- Análise do fluxo elfldr/Payload Manager/Relapse, sem homologação em hardware.
-- A correção da falha real de transferência ainda depende de teste no PS5. Esta release não promete sua resolução.
-
-## 0.1.0 — desenvolvimento local, sem release pública
-
-- Estrutura C++/React, importação seletiva do Prospero, listagem e download para o console.
-- Backend e interface em um único ELF; primeiros testes simulados.
-
-Nomes de arquivos de backup locais não representam versões publicadas.
+- Estrutura C++/React, listagem do Drive e download no console.

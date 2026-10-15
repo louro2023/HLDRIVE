@@ -18,15 +18,15 @@ O payload não depende de um serviço auxiliar no computador para consultar o Dr
 
 `source/frontend` contém React/Vite, navegação por foco e suporte a gamepad padrão. `source/tools/gen_assets.py` comprime os arquivos compilados e gera os recursos incorporados ao backend. As imagens originais ficam em `assets/branding`; as variantes usadas pela interface e pelo atalho são incorporadas ao ELF.
 
-O navegador controla as operações por `/api/...`. `/api/status` informa o estado; as rotas de Drive tratam configuração, listagem, cópia, cancelamento e histórico. O gerenciador local conserva os recursos do Prospero. As operações de escrita compartilham proteção contra alterações concorrentes.
+O navegador controla as operações por `/api/...`. `/api/status` informa o estado; as rotas de Drive tratam configuração, listagem, cópia, cancelamento e histórico. O gerenciador local oferece operações de arquivos. As operações de escrita compartilham proteção contra alterações concorrentes.
 
 ## Ciclo de vida
 
 `/api/app/action` recebe ações distintas para encerrar, excluir e registrar o atalho. Confirmação explícita é exigida e operações ativas impedem a manutenção. O encerramento ocorre após responder à interface.
 
-A exclusao pre-valida `/data/HLDRIVE`, apaga toda a arvore sem seguir links simbolicos nem atravessar montagens, e remove `HLDRIVE.elf` da pasta de payloads configurada quando externa. Downloads fora da arvore e outros payloads sao preservados.
+A exclusão valida `/data/HLDRIVE`, apaga a árvore sem seguir links simbólicos nem atravessar montagens, e remove `HLDRIVE.elf` da pasta configurada quando externa. Arquivos fora da pasta do HLDRIVE são preservados.
 
-O título HLDR00001, em `/user/app/HLDR00001`, é um atalho de navegador para o servidor local. Ele não é um loader nem reinicia o ELF. O registro usa `sceAppInstUtilAppInstallTitleDir`; se essa exportação não estiver disponível, usa `sceAppInstUtilAppInstallAll`, seguindo os caminhos usados por ftpsrv e Payload Manager. O `param.json` classifica o título como Media (`applicationCategoryType: 65536`) e aponta para `/user/app/HLDR00001/sce_sys/icon0.png`.
+O título HLDR00001, em `/user/app/HLDR00001`, é um atalho de navegador para o servidor local. Ele não reinicia o ELF. O registro usa `sceAppInstUtilAppInstallTitleDir`, com `sceAppInstUtilAppInstallAll` como fallback. O `param.json` classifica o título como Media (`applicationCategoryType: 65536`) e aponta para `/user/app/HLDR00001/sce_sys/icon0.png`.
 
 ## Limites de segurança e validação
 

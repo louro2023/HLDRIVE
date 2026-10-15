@@ -1391,157 +1391,23 @@ function ExperimentalPanel() {
   )
 }
 
-const REFERENCE_CREDITS = [
-  {
-    author: 'Ps5-Payload-Dev',
-    url: 'https://github.com/ps5-payload-dev',
-    projects: [
-      { name: 'SDK', url: 'https://github.com/ps5-payload-dev/sdk' },
-      { name: 'elfldr', url: 'https://github.com/ps5-payload-dev/elfldr' },
-      { name: 'ftpsrv', url: 'https://github.com/ps5-payload-dev/ftpsrv' },
-      { name: 'klogsrv', url: 'https://github.com/ps5-payload-dev/klogsrv' },
-      { name: 'offact', url: 'https://github.com/ps5-payload-dev/offact' },
-    ],
-  },
-  {
-    author: 'Sonic-Iso',
-    url: 'https://git.etawen.dev/soniciso',
-    projects: [{ name: 'elf-arsenal', url: 'https://git.etawen.dev/soniciso/elf-arsenal' }],
-  },
-  {
-    author: 'VoidWhisper',
-    projects: [{ name: 'VoidShell' }],
-  },
-  {
-    author: 'PLK',
-    url: 'https://github.com/itsPLK',
-    projects: [
-      { name: 'PS5-Lapy-JB-Daemon', url: 'https://github.com/itsPLK/PS5-Lapy-JB-Daemon' },
-      { name: 'ps5-payload-manager', url: 'https://github.com/itsPLK/ps5-payload-manager' },
-      { name: 'ps5-pkg-manager', url: 'https://github.com/itsPLK/ps5-pkg-manager' },
-    ],
-  },
-  {
-    author: 'Earthonion',
-    url: 'https://git.etawen.dev/earthonion',
-    projects: [
-      { name: 'np-fake-signin', url: 'https://git.etawen.dev/earthonion/np-fake-signin' },
-      { name: 'garlic-savemgr', url: 'https://git.etawen.dev/earthonion/garlic-savemgr' },
-    ],
-  },
-  {
-    author: 'phantomptr',
-    url: 'https://github.com/phantomptr',
-    projects: [{ name: 'ps5upload', url: 'https://github.com/phantomptr/ps5upload' }],
-  },
-  {
-    author: 'owendswang',
-    url: 'https://github.com/owendswang',
-    projects: [
-      { name: 'PS5 Web File Manager', url: 'https://github.com/owendswang/ps5-web-file-manager' },
-      { name: 'ps5-fan-control', url: 'https://github.com/owendswang/ps5-fan-control' },
-    ],
-  },
-  {
-    author: 'seregonwar',
-    url: 'https://github.com/seregonwar',
-    projects: [{ name: 'zftpd', url: 'https://github.com/seregonwar/zftpd' }],
-  },
-  {
-    author: 'drakmor',
-    url: 'https://github.com/drakmor',
-    projects: [
-      { name: 'fan_target', url: 'https://github.com/drakmor/fan_target' },
-      { name: 'ps5-hwinfo', url: 'https://github.com/drakmor/ps5-hwinfo' },
-    ],
-  },
-  { author: 'Libmicrohttpd', url: 'https://www.gnu.org/software/libmicrohttpd/', projects: [] },
-  {
-    author: 'Alexander Roshal / RARLab',
-    url: 'https://www.rarlab.com/',
-    projects: [{ name: 'UnRAR', url: 'https://www.rarlab.com/rar_add.htm' }],
-  },
-]
-
 function AboutPanel() {
   const { t } = useI18n()
   return (
     <Panel title={t('settings.tabAbout')}>
       <div className="text-sm leading-relaxed text-text-dim">
-        <p className="text-text">{t('settings.aboutTagline')}</p>
-        <p className="mt-1">
-          {t('settings.aboutMadeBy', { name: 'maj0r' })} — 🇧🇷
-        </p>
-        <p className="mt-1">{t('settings.aboutForUsers')}</p>
+        <p className="text-text">HLDRIVE 1.0.0</p>
+        <p className="mt-1">Não seja mão de vaca e ajude a melhorar o projeto.</p>
         <p className="mt-3">
-          {t('settings.aboutSource')}{' '}
-          <a
-            href="https://github.com/notmaj0r/HLDRIVE"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 align-middle text-accent hover:underline"
-          >
-            <GithubIcon size={15} /> HLDRIVE
-          </a>{' '}
-          {t('settings.aboutStarPrompt')}
+          <a href="https://www.youtube.com/@henriquelouro7848" target="_blank" rel="noreferrer" className="text-accent hover:underline">
+            Inscreva-se no canal do YouTube
+          </a>
         </p>
+        <p className="mt-3 text-xs">Avisos de licença e créditos obrigatórios estão na documentação do projeto.</p>
       </div>
-
-      <div className="mt-5 border-t border-panel-border pt-4">
-        <div className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-text-dim">{t('settings.specialThanks')}</div>
-        <a
-          href="https://www.youtube.com/@Explosaodogame"
-          target="_blank"
-          rel="noreferrer"
-          className="pmgr-thanks-card group flex items-center gap-3 rounded-xl border border-panel-border bg-bg/45 p-3 text-text"
-        >
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-600 text-white shadow-[0_10px_28px_-12px_#dc2626]"><YoutubeIcon size={23} /></span>
-          <span className="min-w-0 flex-1"><strong className="block truncate">Explosão do Game</strong><small className="text-text-dim">YouTube</small></span>
-          <ExternalIcon size={17} />
-        </a>
-      </div>
-
-      <div className="mt-5 border-t border-panel-border pt-4">
-        <div className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-text-dim">{t('settings.creditsReferences')}</div>
-        <ul className="space-y-2 text-sm leading-relaxed text-text-dim">
-          {REFERENCE_CREDITS.map((credit) => (
-            <li key={credit.url || credit.author} className="flex items-start gap-2">
-              <span aria-hidden="true" className="mt-[0.05em] text-accent">•</span>
-              <p>
-                {credit.url ? (
-                  <a href={credit.url} target="_blank" rel="noreferrer" className="font-bold text-text hover:text-accent hover:underline">
-                    {credit.author}
-                  </a>
-                ) : (
-                  <strong className="text-text">{credit.author}</strong>
-                )}
-                {credit.projects.length > 0 && <span> — </span>}
-                {credit.projects.map((project, index) => (
-                  <span key={project.url || project.name}>
-                    {index > 0 && ', '}
-                    {project.url ? (
-                      <a href={project.url} target="_blank" rel="noreferrer" className="text-accent hover:underline">
-                        {project.name}
-                      </a>
-                    ) : (
-                      <span>{project.name}</span>
-                    )}
-                  </span>
-                ))}
-              </p>
-            </li>
-          ))}
-          <li className="flex items-start gap-2">
-            <span aria-hidden="true" className="mt-[0.05em] text-accent">•</span>
-            <p>{t('settings.communityCredit')}</p>
-          </li>
-        </ul>
-      </div>
-
     </Panel>
   )
 }
-
 const TABS = [
   { id: 'general', labelKey: 'settings.tabGeneral', icon: SlidersIcon },
   { id: 'autoloader', labelKey: 'settings.tabAutoloader', icon: PowerIcon },

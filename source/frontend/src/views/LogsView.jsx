@@ -89,7 +89,7 @@ export default function LogsView({ onNavigate }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `prosperomgr-logs-${Date.now()}.txt`
+    a.download = `hldrive-logs-${Date.now()}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }

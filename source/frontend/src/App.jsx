@@ -23,13 +23,30 @@ export default function App() {
     return () => { alive = false; clearInterval(timer); window.removeEventListener('hashchange', route) }
   }, [stopped])
   function navigate(id) { setActive(id); window.location.hash = `/${id}` }
-  if(stopped)return <div className="grid min-h-screen place-items-center bg-bg p-8 text-text"><div className="pmgr-panel flex max-w-3xl items-center gap-8 rounded-2xl border border-panel-border p-8"><img src="/branding/cover.jpg" alt="Capa HLDRIVE" className="hidden w-44 shrink-0 rounded-xl md:block"/><div><h1 className="text-2xl font-bold text-accent">HLDRIVE</h1><p role="status" className="mt-4">{stopped}</p><p className="mt-4 text-text-dim">A interface foi desconectada. Volte à tela inicial do PS5. Para abrir novamente, execute o payload pelo loader.</p></div></div></div>
+  if(stopped)return <div className="grid min-h-screen place-items-center bg-bg p-8 text-text"><div className="pmgr-panel flex max-w-3xl items-center gap-8 rounded-2xl border border-panel-border p-8"><img src="/branding/cover.jpg" alt="Capa HLDRIVE" className="hidden w-44 shrink-0 rounded-xl md:block"/><div><h1 className="text-2xl font-bold text-accent">HLDRIVE</h1><p role="status" className="mt-4">{stopped}</p><p className="mt-4 text-text-dim">A interface foi desconectada. Volte à tela inicial do PS5. Para abrir novamente, inicie o HLDRIVE pelo ambiente homebrew.</p></div></div></div>
   return <div className="pmgr-app flex h-screen overflow-hidden bg-bg text-text">
     <div className="pmgr-bg" /><div className="pmgr-aurora-blob" />
     <aside className="relative z-10 flex w-20 shrink-0 flex-col gap-4 border-r border-panel-border bg-panel p-3 md:w-56 md:p-5">
       <div className="my-2 flex justify-center"><img src="/branding/tile.png" alt="HLDRIVE" width="96" height="96" className="h-auto w-full max-w-24 rounded-xl"/></div>
       {[['drive','Google Drive',DownloadIcon],['files','Arquivos do PS5',FolderIcon]].map(([id,label,Icon]) => <button key={id} title={label} onClick={() => navigate(id)} aria-current={active === id ? 'page' : undefined} className={`flex items-center gap-3 rounded-xl p-3 text-left text-sm font-semibold ${active === id ? 'bg-accent text-white' : 'text-text-dim hover:bg-panel-2'}`}><Icon size={20}/><span className="hidden md:inline">{label}</span></button>)}
-      <div className="mt-auto"><PayloadManager onStopped={setStopped}/><div className="mt-3 hidden text-xs text-text-dim md:block">HLDRIVE 0.2.2<br/>Gerenciador de arquivos<br/><span className="mt-2 block">Base de arquivos: ProsperoMgr · GPLv3</span></div></div>
+      <div className="mt-auto space-y-2">
+        <PayloadManager onStopped={setStopped}/>
+        <section className="hidden rounded-xl border border-panel-border bg-panel-2/40 p-2 md:block" aria-label="Apoie o criador">
+          <h2 className="text-[11px] font-semibold text-text">Apoie o criador</h2>
+          <p className="mt-1 text-[10px] leading-snug text-text-dim">Não seja mão de vaca e ajude a melhorar o projeto.</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <a href="https://www.youtube.com/@henriquelouro7848" target="_blank" rel="noreferrer" className="flex min-w-0 flex-col items-center gap-1 text-center text-[9px] leading-tight text-text-dim hover:text-text">
+              <img src="/branding/support-youtube.jpg" alt="QR code para se inscrever no canal do YouTube" width="72" height="72" className="h-[72px] w-[72px] rounded bg-white p-1 object-contain" />
+              <span>Inscreva-se no YouTube</span>
+            </a>
+            <div className="flex min-w-0 flex-col items-center gap-1 text-center text-[9px] leading-tight text-text-dim">
+              <img src="/branding/support-financial.png" alt="QR code para apoio financeiro ao criador" width="72" height="72" className="h-[72px] w-[72px] rounded bg-white p-1 object-contain" />
+              <span>Apoio financeiro</span>
+            </div>
+          </div>
+        </section>
+        <div className="hidden text-xs text-text-dim md:block">HLDRIVE 1.0.0<br/>Gerenciador de arquivos</div>
+      </div>
     </aside>
     <div className="relative flex min-w-0 flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-panel-border bg-panel/70 px-5 py-4">
