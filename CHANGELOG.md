@@ -1,5 +1,11 @@
 # Histórico de alterações
 
+## Catálogo do Payload Manager — 2026-10-15
+
+- Publicada fonte personalizada `repository/payloads.json`, com download e checksum do ELF 1.0.2.
+- Adicionada miniatura da logo HLDRIVE em JPEG 128×128 e catálogo `icons.json`, conforme o formato do Payload Manager v0.6.1.
+- O ELF permanece inalterado; a miniatura é fornecida pela fonte adicionada ao Manager, não extraída do payload.
+
 ## v1.0.2 — 2026-10-15
 
 - Adicionado seletor de idioma com bandeiras SVG para Português (Brasil), English (US) e Español (Argentina).

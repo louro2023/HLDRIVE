@@ -1,0 +1,22 @@
+{
+  "name": "HLDRIVE",
+  "icons_url": "icons.json",
+  "payloads": [
+    {
+      "id": "hldrive",
+      "name": "HLDRIVE",
+      "filename": "HLDRIVE.elf",
+      "url": "https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf",
+      "version": "1.0.2",
+      "last_update": "2026-10-15",
+      "description": "PS5 file manager with public Google Drive folders, downloads to a chosen console folder, and Portuguese, English and Argentine Spanish interfaces.",
+      "category": "File Managers",
+      "author": "louro2023",
+      "checksum": "9cb2fec2567f80207e2225fa140aa742a9f0039f1b7f4bcf66fe3a421de9809f",
+      "icon_key": "hldrive",
+      "details_url": "https://raw.githubusercontent.com/louro2023/HLDRIVE/main/README.md",
+      "source": "https://github.com/louro2023/HLDRIVE",
+      "release_notes": "## v1.0.2\n\nLanguage selector with Brazilian, US and Argentine flags. Language preference is saved in the browser. Interface and translations are embedded in the ELF. Firmware 13.60 is potentially compatible but has not been tested."
+    }
+  ]
+}

@@ -10,6 +10,8 @@ Gerenciador de arquivos homebrew para PS5, com navegação em pastas públicas d
 
 Veja a [galeria de telas](docs/GALLERY.md), [histórico de alterações](CHANGELOG.md) e [instruções de compilação](docs/BUILD.md).
 
+**Miniatura no Payload Manager:** adicione a [fonte HLDRIVE](https://raw.githubusercontent.com/louro2023/HLDRIVE/main/repository/payloads.json) em **Settings → Manage Sources → Add Source**. Depois procure HLDRIVE em **Get Payloads**. [Instruções e funcionamento do ícone](repository/README.md).
+
 ## Funcionalidades
 
 - Selecionar Português (Brasil), English (US) ou Español (Argentina) pelo botão de bandeira no topo da interface.
