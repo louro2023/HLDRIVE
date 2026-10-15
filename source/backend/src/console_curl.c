@@ -85,6 +85,10 @@ static int console_curl_on_socket(void *user, curl_socket_t socket, curlsocktype
 {
     (void)user;
     (void)purpose;
+    /* The PS5 network stack's small default receive window can cap a single
+     * high-latency transfer. Request a larger window; the kernel may clamp it. */
+    const int receive_buffer = 512 * 1024;
+    (void)setsockopt(socket, SOL_SOCKET, SO_RCVBUF, &receive_buffer, sizeof(receive_buffer));
     /* Keep going if it fails: the transfer still works, only slowly. */
     (void)console_curl_nonblocking(socket);
     return CURL_SOCKOPT_OK;

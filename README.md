@@ -4,9 +4,9 @@
 
 Gerenciador de arquivos homebrew para PS5, com navegação em pastas públicas do Google Drive e download direto para o console. Interface, imagens e recursos estão incorporados em um único arquivo `HLDRIVE.elf`.
 
-> **Versão 1.0.0 — testada e funcionando, conforme informado pelo usuário.** Firmware e ambiente de teste não foram especificados. A compilação desta publicação foi gerada localmente.
+> **Versão 1.0.1 — testada pelo usuário no PS5.** O usuário confirmou que o download ficou muito mais rápido, ultrapassando 500 Mb/s em seu teste. A velocidade depende da rede, do PS5 e da resposta do Google Drive.
 
-**Downloads:** [ELF 1.0.0](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.0/HLDRIVE.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.0/HLDRIVE.elf.sha256) · [Release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.0)
+**Downloads:** [ELF 1.0.1](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.1/HLDRIVE.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.1/HLDRIVE.elf.sha256) · [Release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.1)
 
 Veja a [galeria de telas](docs/GALLERY.md), [histórico de alterações](CHANGELOG.md) e [instruções de compilação](docs/BUILD.md).
 
@@ -14,6 +14,7 @@ Veja a [galeria de telas](docs/GALLERY.md), [histórico de alterações](CHANGEL
 
 - Abrir links públicos do Drive e navegar por subpastas.
 - Selecionar arquivos e pastas e escolher o destino no PS5.
+- Acelerar arquivos grandes com até oito conexões simultâneas por arquivo quando o Drive oferecer suporte a intervalos; os arquivos escolhidos são baixados em fila.
 - Baixar itens selecionados ou copiar e colar arquivos no console.
 - Preservar pastas, acompanhar progresso e cancelar transferências.
 - Navegar, copiar, mover, renomear e excluir arquivos locais.
@@ -45,7 +46,7 @@ Os downloads são gravados no destino escolhido. Interrupções abruptas podem d
 - O acesso ao Drive depende da disponibilidade do HTML público do Google e de `/system/common/cert/CA_LIST.cer`; a validação de certificados TLS permanece habilitada.
 - Pastas muito grandes, documentos nativos, atalhos, cotas ou exigência de login podem limitar downloads.
 - A interface local não possui autenticação. Use em rede confiável e não exponha a porta 8081 à internet.
-- Compatibilidade varia por firmware e ambiente homebrew. O relato do usuário sobre a versão 1.0.0 não certifica outras configurações.
+- Compatibilidade varia por firmware e ambiente homebrew. O teste relatado pelo usuário confirma o desempenho em seu console, mas não certifica outras configurações ou velocidades.
 
 ## Licença
 

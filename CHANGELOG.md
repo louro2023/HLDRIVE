@@ -1,5 +1,13 @@
 # Histórico de alterações
 
+## v1.0.1 — 2026-10-15
+
+- Aumentada a velocidade de download de arquivos grandes com até oito conexões de intervalo para um mesmo arquivo, quando o Google Drive oferece suporte seguro a essa modalidade.
+- Aumentados os buffers de recepção de rede e do libcurl para melhorar transferências em uma única conexão.
+- Mantida uma fila serial para arquivos adicionais; somente as partes do arquivo atual são baixadas em paralelo.
+- O usuário testou a versão no PS5 e relatou velocidade acima de 500 Mb/s. O resultado depende da rede e do servidor.
+- Corrigida a detecção de versões do arquivo durante o download; quando o servidor não confirma suporte a intervalos, o payload usa a transferência convencional.
+
 ## v1.0.0 — 2026-10-15
 
 - Adicionados QR codes discretos para o canal do criador e apoio financeiro.

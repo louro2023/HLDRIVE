@@ -1396,7 +1396,7 @@ function AboutPanel() {
   return (
     <Panel title={t('settings.tabAbout')}>
       <div className="text-sm leading-relaxed text-text-dim">
-        <p className="text-text">HLDRIVE 1.0.0</p>
+        <p className="text-text">HLDRIVE 1.0.1</p>
         <p className="mt-1">Não seja mão de vaca e ajude a melhorar o projeto.</p>
         <p className="mt-3">
           <a href="https://www.youtube.com/@henriquelouro7848" target="_blank" rel="noreferrer" className="text-accent hover:underline">

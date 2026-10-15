@@ -45,7 +45,7 @@ export default function App() {
             </div>
           </div>
         </section>
-        <div className="hidden text-xs text-text-dim md:block">HLDRIVE 1.0.0<br/>Gerenciador de arquivos</div>
+        <div className="hidden text-xs text-text-dim md:block">HLDRIVE 1.0.1<br/>Gerenciador de arquivos</div>
       </div>
     </aside>
     <div className="relative flex min-w-0 flex-1 flex-col">
