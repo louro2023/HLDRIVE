@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
+PROJECT_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 export PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
 export LLVM_CONFIG=/usr/lib/llvm20/bin/llvm-config
 export PATH="/usr/lib/llvm20/bin:/usr/bin:/bin:$PATH"
 if [[ ! -e /usr/lib/llvm20/bin/ld.lld ]]; then
   ln -s /usr/bin/ld.lld /usr/lib/llvm20/bin/ld.lld
 fi
+bash "$PROJECT_ROOT/tools/setup-pacbrew.sh"
 mkdir -p /opt/hldrive-deps
 cd /opt/hldrive-deps
 if [[ ! -f "$PS5_PAYLOAD_SDK/target/lib/libmicrohttpd.a" ]]; then

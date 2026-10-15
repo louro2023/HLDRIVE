@@ -15,6 +15,10 @@ int sceHttpDeleteTemplate(int id){return 0;}
 int sceHttpSetResponseHeaderMaxSize(int id,size_t n){headersize=n;return 0;}
 int sceHttpSetAutoRedirect(int id,int on){assert(!on);return 0;}
 int sceHttpsEnableOption(int id,unsigned int flags){sni=flags;return 0;}
+int sceHttpsGetCaList(https_ca_list_t *list){static void *certs[1]={(void *)1};list->certs=certs;list->count=1;return 0;}
+int sceHttpsFreeCaList(https_ca_list_t *list){list->certs=NULL;list->count=0;return 0;}
+int sceHttpsLoadCert(int id,int count,void *certs,void *cert,void *key){return 0;}
+int sceHttpsUnloadCert(void){return 0;}
 int sceHttpsGetSslError(int id,int *e,unsigned int *d){*e=mode==2?1:0;*d=mode==2?32:0;return 0;}
 int sceHttpCreateConnectionWithURL(int t,const char *url,int keep){assert(strncmp(url,"https://drive.",14)==0);return 5;}
 int sceHttpDeleteConnection(int id){return 0;}

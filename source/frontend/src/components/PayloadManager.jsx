@@ -3,7 +3,7 @@ import { ConfirmDialog } from './Dialog.jsx'
 
 const actions = {
   stop: {label:'Encerrar HLDRIVE', description:'Encerra o payload e desconecta esta interface. Mantém o atalho, as configurações e todos os downloads. Para usar novamente, execute o ELF pelo loader.', confirm:'Encerrar agora'},
-  remove: {label:'Excluir HLDRIVE', description:'Remove o atalho HLDRIVE da aba Mídia e suas configurações, depois encerra o payload. Jogos, downloads e outros arquivos serão preservados. O ELF enviado pela rede roda na memória; cópias guardadas manualmente no loader não serão apagadas.', confirm:'Excluir e encerrar'},
+  remove: {label:'Excluir HLDRIVE', description:'Remove o atalho, a copia HLDRIVE.elf na pasta configurada e todo /data/HLDRIVE, incluindo downloads e configuracoes guardados ali. Arquivos em pastas de destino fora de /data/HLDRIVE e outros payloads permanecem.', confirm:'Excluir tudo e encerrar'},
   install_shortcut: {label:'Adicionar ícone na Mídia', description:'Registra o atalho HLDRIVE no PS5. Ele abre esta interface enquanto o payload estiver em execução; após reiniciar o console, execute o ELF pelo loader novamente.', confirm:'Registrar atalho'},
 }
 export default function PayloadManager({onStopped}) {

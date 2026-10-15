@@ -1,9 +1,25 @@
 # Histórico de alterações
 
+## v0.2.1 — 2026-10-14 — transporte HTTPS experimental
+
+### Google Drive e rede
+
+- Substituído o transporte HTTPS nativo SCE por libcurl/OpenSSL para acessar pastas públicas e baixar arquivos diretamente no PS5.
+- TLS continua validando certificado e hostname com as autoridades de `/system/common/cert/CA_LIST.cer`; não há modo inseguro que ignore certificados.
+- Resolução de nomes encaminhada ao `sceNetResolver`, respeitando o DNS configurado no próprio console.
+- Redirecionamentos de download limitados a hosts Google permitidos; respostas e transferências são limitadas e transmitidas em fluxo para o destino no PS5.
+- Diagnósticos atualizados para distinguir falhas de CA, validação TLS, DNS e conexão.
+
+### Build e validação
+
+- Build reproduzível prepara libcurl e dependências PacBrew com hash SHA-256 fixado.
+- Atualizados os scripts de build Windows/WSL e a documentação de compilação, arquitetura e validação.
+- ELF compilado com sucesso. O acesso real ao Google, a listagem e o download ainda precisam de validação no console; esta versão não declara a falha TLS resolvida em hardware.
+
 ## Atualização da documentação — 2026-10-14
 
 - Esclarecida a possibilidade de execução no firmware 13.60, com base no suporte do SDK e dos loaders. O HLDRIVE ainda não foi testado nessa versão.
-- README, compatibilidade, plano de testes e notas da release atualizados. Esta revisão documental não altera o ELF v0.2.0.
+- Revisão documental histórica da versão v0.2.0.
 
 ## v0.2.0 — 2026-10-14 — primeira publicação experimental
 

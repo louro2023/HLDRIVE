@@ -1,6 +1,6 @@
 #pragma once
-// Native PS5 HTTPS transport (sceNet/sceSsl/sceHttp), used for both metadata fetches and
-// payload downloads. Nothing here calls back into app code from inside sceHttp/sceSsl internals.
+// HTTP transport contract used for Drive metadata and downloads. The production PS5 adapter is
+// curl_http_bridge.cpp (PacBrew libcurl/OpenSSL); it validates against the console CA_LIST.cer.
 
 #include <stddef.h>
 

@@ -38,7 +38,7 @@ int main() {
     if(!InstallMediaShortcut(&shortcut_error))LogEvent("HLDRIVE atalho: "+shortcut_error);
     if(!server.Start()) {LogEvent("HLDRIVE: porta 7070 indisponível.");return 1;}
     signal(SIGCONT,Resume);
-    LogEvent("HLDRIVE 0.2.0: http://<IP_DO_PS5>:7070");
+    LogEvent("HLDRIVE 0.2.1: http://<IP_DO_PS5>:7070");
     // Same launch ABI as ps5-payload-dev/sdk samples/browser/main.c.
     const int browser = sceSystemServiceLaunchWebBrowser("http://127.0.0.1:7070/?console=1", nullptr);
     if (user_service == 0) sceUserServiceTerminate();

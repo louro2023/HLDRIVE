@@ -45,8 +45,19 @@ std::string NetworkError(const prosperomgr_http_result &r) {
     char diagnostic[256];
     std::snprintf(diagnostic,sizeof(diagnostic),"HTTP %ld; etapa %d; transporte %d; SCE 0x%08x; TLS 0x%08x/0x%08x",r.http_status,r.stage,r.kind,(unsigned int)r.sce_code,(unsigned int)r.ssl_error,r.ssl_detail);
     LogEvent(std::string("Drive transporte: ")+diagnostic);
+    if (r.sce_code == (long long)(int)0x804311fe) {
+        if (r.stage == 3) return std::string("A biblioteca HTTP do PS5 rejeitou os parâmetros de inicialização (SCE_HTTP_ERROR_INVALID_VALUE). A conexão ainda não chegou à resolução DNS; o DNS 45.56.67.85 não é a causa desta etapa. ") + diagnostic;
+        if (r.stage == 31) return std::string("A biblioteca HTTPS do PS5 rejeitou a consulta da lista de certificados do sistema (SCE_HTTP_ERROR_INVALID_VALUE). A conexão ainda não chegou à resolução DNS. ") + diagnostic;
+        if (r.stage == 32) return std::string("A biblioteca HTTPS do PS5 rejeitou o carregamento dos certificados confiáveis do sistema (SCE_HTTP_ERROR_INVALID_VALUE). A conexão ainda não chegou à resolução DNS. ") + diagnostic;
+    }
+    if(r.sce_code==-10060) return std::string("libcurl/OpenSSL recusou o certificado TLS do Google usando a lista CA_LIST.cer do PS5. Confira a data e hora do console e atualize o sistema se a cadeia estiver desatualizada. A validação do certificado permanece ativa. ")+diagnostic;
+    if(r.sce_code==-10077) return std::string("Não foi possível abrir /system/common/cert/CA_LIST.cer no PS5. Confira o acesso do payload à lista de certificados. ")+diagnostic;
+    if(r.sce_code==-10006) return std::string("O resolvedor de rede do PS5 não encontrou o host do Google. Confira a conexão e o DNS configurado no console. ")+diagnostic;
     if(r.kind==PROSPEROMGR_HTTP_ERR_WRITE)return std::string("Falha ao gravar no console. Confira espaço livre e permissões. ")+diagnostic;
-    if(r.ssl_error || r.ssl_detail) return std::string("Falha TLS ao conectar ao Google. Confira data/hora do PS5 e compatibilidade de certificados. ")+diagnostic;
+    if (r.ssl_error == 0x8095f00a && (r.ssl_detail & 0x20u)) {
+        return std::string("O PS5 recusou o certificado TLS do Google porque a autoridade certificadora não é confiável (TLS 0x8095f00a; detalhe 0x20). Confira data/hora e os certificados do sistema. Se estiverem corretos, este transporte TLS nativo não conseguiu validar a cadeia de certificados neste ambiente. ") + diagnostic;
+    }
+    if(r.ssl_error || r.ssl_detail) return std::string("O PS5 recusou a conexão TLS com o Google. Confira data/hora e os certificados do sistema; não é seguro ignorar a validação do certificado. ")+diagnostic;
     if(r.http_status==403||r.http_status==429) return "Google recusou o acesso: permissão, cota ou limite de downloads (HTTP "+std::to_string(r.http_status)+").";
     if(r.http_status==404) return "Arquivo ou pasta não encontrado no Google Drive.";
     if(r.http_status==409) return "Google retornou uma página de confirmação ou erro, não um arquivo. Nenhum arquivo foi concluído.";

@@ -1,22 +1,18 @@
 # Arquitetura do HLDRIVE
 
-O ELF reúne backend C/C++, servidor HTTP e frontend React. Não depende de um servidor externo do projeto. A interface é derivada do ProsperoMgr; a integração do Drive executa no console.
+O ELF reúne backend C/C++, servidor HTTP e frontend React. O próprio payload PS5 consulta o Google Drive e grava os arquivos no armazenamento do console.
 
 ## Inicialização
 
-O processo prepara `/data/HLDRIVE`, impede uma segunda instância com `instance.lock`, inicia as filas, registra as rotas HTTP e tenta registrar o atalho HLDR00001. O servidor escuta na porta 7070. A abertura do navegador usa os serviços do PS5; sua disponibilidade depende do ambiente homebrew.
+O processo prepara /data/HLDRIVE, inicia filas e rotas HTTP na porta 7070 e tenta registrar o atalho HLDR00001. A interface pode ser aberta no navegador do console ou em outro dispositivo da mesma rede. As chamadas de rede ao Drive são executadas pelo payload no PS5.
 
 ## Google Drive
 
-1. O usuário informa uma pasta pública. Sua URL pode ser persistida em `/data/HLDRIVE/drive-folder.txt`.
-2. O backend consulta `embeddedfolderview` por HTTPS e interpreta nomes, IDs e subpastas. Abrir uma pasta não baixa seus arquivos.
-3. A seleção cria tarefas com um destino local validado e política de conflitos.
-4. O trabalhador resolve URLs de download e formulários de confirmação do Google. Redirecionamentos são limitados a hosts HTTPS permitidos.
-5. O corpo é gravado em blocos de 256 KiB num arquivo temporário `.part`; ao concluir, ele é renomeado para o destino final. Respostas HTML não são aceitas como arquivos.
+O payload consulta embeddedfolderview pelo libcurl/OpenSSL do PacBrew e retorna a listagem à interface. O helper `console_curl.c` resolve nomes pelo `sceNetResolver` do PS5 e lê `/system/common/cert/CA_LIST.cer` para validação TLS.
 
-O transporte usa `sceNet`, `sceSsl` e `sceHttp`, com SNI, proxy automático desativado, `Accept-Encoding: identity`, buffer de cabeçalhos ampliado e diagnóstico por etapa. Uma tentativa adicional de conexão é permitida antes da escrita quando não há erro TLS identificado. A política de certificados da plataforma não é substituída por um callback que aceite tudo.
+Ao baixar, o payload segue redirecionamentos HTTPS apenas entre hosts Google permitidos e grava o fluxo no destino escolhido no console. A validação de certificado e hostname permanece habilitada. O DNS segue a configuração de rede do PS5.
 
-Há uma fila sequencial, até 32 itens ativos e histórico limitado. A expansão de pastas tem limite de 32 níveis e 10.000 itens. As tarefas não sobrevivem à saída do processo. Não há retomada de parciais nem garantia de paginação completa de grandes bibliotecas. O HTML público do Google pode mudar.
+O payload não depende de um serviço auxiliar no computador para consultar o Drive.
 
 ## Interface e recursos
 
@@ -28,7 +24,7 @@ O navegador controla as operações por `/api/...`. `/api/status` informa o esta
 
 `/api/app/action` recebe ações distintas para encerrar, excluir e registrar o atalho. Confirmação explícita é exigida e operações ativas impedem a manutenção. O encerramento ocorre após responder à interface.
 
-A exclusão usa uma lista de arquivos conhecidos, verifica links e propriedade do diretório do atalho, e preserva downloads e arquivos desconhecidos. Não faz remoção recursiva de `/data/HLDRIVE`. Também não remove cópias do ELF mantidas pelo loader ou configurações de autoload externas.
+A exclusao pre-valida `/data/HLDRIVE`, apaga toda a arvore sem seguir links simbolicos nem atravessar montagens, e remove `HLDRIVE.elf` da pasta de payloads configurada quando externa. Downloads fora da arvore e outros payloads sao preservados.
 
 O título HLDR00001, em `/user/app/HLDR00001`, é um atalho de navegador para o servidor local. Ele não é um loader nem reinicia o ELF. Seu registro individual usa o serviço AppInstUtil, quando disponível.
 

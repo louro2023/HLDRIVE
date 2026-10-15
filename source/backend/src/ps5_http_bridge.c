@@ -39,6 +39,16 @@ extern int sceHttpSetResponseHeaderMaxSize(int id, size_t headerSize);
 extern int sceHttpSetAutoRedirect(int id, int enable);
 extern int sceHttpsEnableOption(int id, unsigned int flags);
 extern int sceHttpsGetSslError(int id, int *error, unsigned int *detail);
+// The system HTTPS CA list is not guaranteed to be attached to a payload-created
+// HTTP context. Import the console's trusted roots explicitly; never skip verify.
+typedef struct {
+    void **certs;
+    int count;
+} https_ca_list_t;
+extern int sceHttpsGetCaList(https_ca_list_t *list);
+extern int sceHttpsFreeCaList(https_ca_list_t *list);
+extern int sceHttpsLoadCert(int httpCtxId, int count, void *certs, void *clientCert, void *privateKey);
+extern int sceHttpsUnloadCert(void);
 
 extern int sceHttpCreateConnectionWithURL(int tmplId, const char *url, int enableKeepAlive);
 extern int sceHttpDeleteConnection(int connId);
@@ -75,6 +85,7 @@ typedef struct {
     int tmpl;
     int conn;
     int req;
+    int ca_loaded;
 } http_ctx_t;
 
 static void http_ctx_init(http_ctx_t *ctx) {
@@ -84,6 +95,7 @@ static void http_ctx_init(http_ctx_t *ctx) {
     ctx->tmpl = -1;
     ctx->conn = -1;
     ctx->req = -1;
+    ctx->ca_loaded = 0;
 }
 
 // Teardown order (request, connection, template, http, ssl, net pool) is the one actually
@@ -93,6 +105,7 @@ static void http_ctx_close(http_ctx_t *ctx) {
     if (ctx->req >= 0) sceHttpDeleteRequest(ctx->req);
     if (ctx->conn >= 0) sceHttpDeleteConnection(ctx->conn);
     if (ctx->tmpl >= 0) sceHttpDeleteTemplate(ctx->tmpl);
+    if (ctx->ca_loaded) sceHttpsUnloadCert();
     if (ctx->http_ctx >= 0) sceHttpTerm(ctx->http_ctx);
     if (ctx->ssl_ctx >= 0) sceSslTerm(ctx->ssl_ctx);
     if (ctx->net_pool >= 0) sceNetPoolDestroy(ctx->net_pool);
@@ -246,6 +259,28 @@ static int http_open(http_ctx_t *ctx, const char *url, const char *header_name, 
         set_result(result, PROSPEROMGR_HTTP_ERR_INIT, 0, ctx->http_ctx);
         return -1;
     }
+
+    // Payloads run outside a title sandbox, where sceHttp may not automatically
+    // pick up the console CA store. Load the platform list into this HTTPS
+    // context so Google certificates chain to a trusted root. Verification and
+    // hostname checks remain enabled.
+    g_stage = 3;
+    https_ca_list_t ca_list;
+    memset(&ca_list, 0, sizeof(ca_list));
+    g_stage = 31;
+    rc = sceHttpsGetCaList(&ca_list);
+    if (rc == 0 && ca_list.certs && ca_list.count > 0) {
+        g_stage = 32;
+        rc = sceHttpsLoadCert(ctx->http_ctx, ca_list.count, ca_list.certs, NULL, NULL);
+        sceHttpsFreeCaList(&ca_list);
+        if (rc == 0) ctx->ca_loaded = 1;
+    } else if (ca_list.certs) {
+        sceHttpsFreeCaList(&ca_list);
+    }
+
+    // Some payload environments reject CA-list enumeration. Continue with the
+    // platform's normal certificate policy; never disable certificate checks.
+    g_stage = 33;
     if ((ctx->tmpl = sceHttpCreateTemplate(ctx->http_ctx, "HLDRIVE/1.1", 2, 0)) < 0) {
         set_result(result, PROSPEROMGR_HTTP_ERR_INIT, 0, ctx->tmpl);
         return -1;

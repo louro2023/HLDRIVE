@@ -29,7 +29,7 @@ export default function App() {
     <aside className="relative z-10 flex w-20 shrink-0 flex-col gap-4 border-r border-panel-border bg-panel p-3 md:w-56 md:p-5">
       <div className="my-2 flex justify-center"><img src="/branding/tile.png" alt="HLDRIVE" width="96" height="96" className="h-auto w-full max-w-24 rounded-xl"/></div>
       {[['drive','Google Drive',DownloadIcon],['files','Arquivos do PS5',FolderIcon]].map(([id,label,Icon]) => <button key={id} title={label} onClick={() => navigate(id)} aria-current={active === id ? 'page' : undefined} className={`flex items-center gap-3 rounded-xl p-3 text-left text-sm font-semibold ${active === id ? 'bg-accent text-white' : 'text-text-dim hover:bg-panel-2'}`}><Icon size={20}/><span className="hidden md:inline">{label}</span></button>)}
-      <div className="mt-auto"><PayloadManager onStopped={setStopped}/><div className="mt-3 hidden text-xs text-text-dim md:block">HLDRIVE 0.2.0<br/>Gerenciador de arquivos<br/><span className="mt-2 block">Base de arquivos: ProsperoMgr · GPLv3</span></div></div>
+      <div className="mt-auto"><PayloadManager onStopped={setStopped}/><div className="mt-3 hidden text-xs text-text-dim md:block">HLDRIVE 0.2.1<br/>Gerenciador de arquivos<br/><span className="mt-2 block">Base de arquivos: ProsperoMgr · GPLv3</span></div></div>
     </aside>
     <div className="relative flex min-w-0 flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-panel-border bg-panel/70 px-5 py-4">

@@ -32,7 +32,7 @@ export default function DriveView({connection,onOpenFiles}) {
   useEffect(() => {
     if(connection !== 'online') return
     let alive=true, timer
-    const poll=async()=>{try {const data=await request('jobs');if(alive){setJobs(data.jobs||[]);setPollError('')}}catch(e){if(alive)setPollError('Não foi possível atualizar as transferências.')}finally{if(alive)timer=setTimeout(poll,1500)}}
+    const poll=async()=>{try {const data=await request('jobs');if(alive){setJobs(data.jobs||[]);setPollError('')}}catch(e){if(alive)setPollError(e.message||'Não foi possível atualizar as transferências.')}finally{if(alive)timer=setTimeout(poll,1500)}}
     poll(); return()=>{alive=false;clearTimeout(timer)}
   },[connection])
   async function browse(next, history) {
@@ -50,12 +50,12 @@ export default function DriveView({connection,onOpenFiles}) {
   }
   async function paste(path) {
     setError('')
-    try {await request('copy',{...picker,destination:path,conflict});setDestination(path);setPicker(null);setNotice('Transferência adicionada à fila.');const data=await request('jobs');setJobs(data.jobs||[])}
+    try {await request('copy',{...picker,destination:path,conflict});setDestination(path);setPicker(null);setNotice('Transferência adicionada à fila do PS5.');const data=await request('jobs');setJobs(data.jobs||[])}
     catch(e){setError(e.message);throw e}
   }
   async function clearFinished() {
     try {
-      await request('clear', {})
+      await request('clear',{})
       const result = await request('jobs')
       setJobs(result.jobs || [])
     } catch (e) { setError(e.message) }
@@ -66,7 +66,7 @@ export default function DriveView({connection,onOpenFiles}) {
   return <div className="mx-auto max-w-[1500px] space-y-5">
     <section className="pmgr-panel rounded-2xl border border-panel-border p-5">
       <h2 className="text-lg font-bold">Sua biblioteca no Google Drive</h2>
-      <p className="mt-1 text-sm text-text-dim">Cole o link de uma pasta compartilhada com “Qualquer pessoa com o link”. Os arquivos são baixados diretamente para o PS5.</p>
+      <p className="mt-1 text-sm text-text-dim">A listagem e o download são feitos diretamente pelo PS5. Compartilhe a pasta do Drive com “Qualquer pessoa com o link”.</p>
       <form className="mt-4 flex flex-wrap gap-3" onSubmit={e=>{e.preventDefault();browse(url,[])}}>
         <input aria-label="Link da pasta pública do Google Drive" type="url" required value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://drive.google.com/drive/folders/…" className="min-w-0 flex-1 rounded-xl border border-panel-border bg-bg px-4 py-3 text-sm outline-none focus:border-accent"/>
         <button className={`${button} bg-accent text-white`} disabled={busy||active||connection!=='online'}>{busy?'Abrindo…':'Abrir pasta'}</button>

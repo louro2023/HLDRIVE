@@ -7,6 +7,8 @@ HLDRIVE deriva do [ProsperoMgr](https://github.com/notmaj0r/ProsperoMgr), de maj
 | ProsperoMgr | Base da interface e gerenciamento de arquivos; GPL v3. |
 | PS5 Payload SDK | Toolchain e runtime; consulte os avisos da distribuição [SDK](https://github.com/ps5-payload-dev/sdk). |
 | GNU libmicrohttpd 1.0.2 | Servidor HTTP vinculado estaticamente; LGPL 2.1 ou posterior, conforme a distribuição upstream. Fonte e configuração usadas são obtidas por `tools/setup-build.sh`; [upstream](https://www.gnu.org/software/libmicrohttpd/). |
+| PacBrew v0.40.2: libcurl 8.18.0, OpenSSL 3.5.2, zlib, zstd e libpsl | Transporte HTTPS estático do PS5. O pacote e SHA-256 estão fixados em `tools/setup-pacbrew.sh`; licenças upstream: libcurl (curl/MIT), OpenSSL (Apache 2.0), zlib (zlib), zstd (BSD-3-Clause) e libpsl (MIT/MPL-2.0). |
+| `console_curl.c` / `console_curl.h` | Integração PS5 adaptada de [ps5-native-app-boilerplate](https://github.com/blackbearreloaded/ps5-native-app-boilerplate), GPL-3.0-or-later; copyright e SPDX preservados no arquivo. |
 | miniz | Compressão e arquivos ZIP; declaração Unlicense/domínio público preservada em `source/backend/third_party/miniz.h` e no código correspondente. |
 | UnRAR | Extração RAR; licença própria de Alexander Roshal em [license.txt](source/backend/third_party/unrar/license.txt), incluindo restrição ao desenvolvimento de compressor compatível com RAR. |
 | Dependências frontend | Versões registradas em `source/frontend/package-lock.json`; cada pacote mantém sua licença. |
