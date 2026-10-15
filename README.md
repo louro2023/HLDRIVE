@@ -8,7 +8,7 @@ O HLDRIVE combina uma interface baseada no [ProsperoMgr](https://github.com/notm
 
 > **v0.2.1 — versão experimental.** O acesso ao Google Drive foi migrado para libcurl/OpenSSL no PS5, com validação de certificados usando a lista de CAs do sistema e resolução DNS pelo serviço de rede do console. A compilação passou; listagem e downloads reais ainda precisam ser validados em um PS5. Não desative a validação TLS.
 
-**[Baixar HLDRIVE.elf](https://github.com/louro2023/HLDRIVE/releases/download/v0.2.1/HLDRIVE.elf)** · **[Release](https://github.com/louro2023/HLDRIVE/releases/tag/v0.2.1)** · **[SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v0.2.1/HLDRIVE.elf.sha256)** · **[Atualizações](CHANGELOG.md)**
+**ELF de teste:** `build/HLDRIVE.elf` (gerado localmente) · [Como compilar](docs/BUILD.md) · [Atualizações](CHANGELOG.md)
 
 ![Interface HLDRIVE](docs/images/interface.png)
 
@@ -53,7 +53,7 @@ O alvo inicial de testes é **firmware 12.40 com elfldr**. **É possível que o 
 
 ## Instalação e primeiro uso
 
-1. Baixe **somente `HLDRIVE.elf`** na [release v0.2.1](https://github.com/louro2023/HLDRIVE/releases/tag/v0.2.1). Não precisa copiar a pasta `build`, imagens ou código-fonte.
+1. Use **somente `build/HLDRIVE.elf`**, gerado conforme [as instruções de compilação](docs/BUILD.md). O repositório ainda não tem um anexo binário publicado para a v0.2.1.
 2. Inicie o ambiente homebrew e o elfldr no PS5.
 3. Envie o ELF pelo loader, normalmente na porta **9021**, ou importe e execute pelo Payload Manager.
 4. O payload tenta abrir `http://127.0.0.1:7070/?console=1` no navegador do console. Se não abrir, acesse **`http://IP_DO_PS5:7070`** de outro dispositivo na mesma rede.
