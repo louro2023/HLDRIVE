@@ -196,7 +196,7 @@ function TransferTray({ transfers, locale, t }) {
                 </span>
               )}
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-panel-border">
+            <div className="hldrive-file-progress h-1.5 overflow-hidden rounded-full bg-panel-border">
               <div
                 className="h-full rounded-full bg-accent transition-[width] duration-200"
                 style={{ width: `${tr.done ? 100 : pct}%` }}
@@ -277,7 +277,7 @@ function FileJobsTray({ jobs, locale, onCancel, onClear, t }) {
                 {canCancel && <Button size="sm" tone="danger" onClick={() => onCancel(job.id)}>{t('files.cancelJob')}</Button>}
               </div>
               {job.state !== 'queued' && (
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-panel-border">
+                <div className="hldrive-file-progress mt-2 h-1.5 overflow-hidden rounded-full bg-panel-border">
                   <div className={`h-full rounded-full ${job.state === 'error' ? 'bg-err' : job.state === 'attention' ? 'bg-warn' : 'bg-accent'} transition-[width]`} style={{ width: `${['done', 'attention'].includes(job.state) ? 100 : pct}%` }} />
                 </div>
               )}
@@ -1167,7 +1167,7 @@ export default function FtpView() {
                     <span className="font-semibold text-text">{volumeLabel(volume, t)}</span>
                     <span className="pmgr-mono text-text-dim">{t('files.storageFree', { size: formatFileSize(volume.free, locale) })}</span>
                   </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-panel-border">
+                  <div className="hldrive-file-progress mt-2 h-1.5 overflow-hidden rounded-full bg-panel-border">
                     <div className={`h-full rounded-full transition-[width] duration-300 ${volumeBarClass(used)}`} style={{ width: `${used}%` }} />
                   </div>
                   <div className="mt-1.5 truncate text-xs text-text-dim" dir="ltr">{volume.path} · {formatFileSize(volume.total, locale)}</div>

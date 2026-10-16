@@ -33,7 +33,7 @@ export const NewFileIcon = (p) => (
 
 export const NewFolderIcon = (p) => (
   <IconBase {...p}>
-    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" fill="#f8c74f" stroke="#d99a21" />
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
     <path d="M12 11v5M9.5 13.5h5" stroke="#76500b" />
   </IconBase>
 )
@@ -330,7 +330,7 @@ export const ArrowLeftIcon = (p) => (
 
 export const FolderIcon = (p) => (
   <IconBase {...p}>
-    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" fill="#f8c74f" stroke="#d99a21" />
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
   </IconBase>
 )
 

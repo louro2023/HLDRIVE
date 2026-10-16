@@ -15,7 +15,7 @@ function size(bytes, t) {
   return `${bytes.toFixed(unit ? 1 : 0)} ${units[unit]}`
 }
 
-const button='rounded-lg border border-panel-border bg-panel-2 px-4 py-2 text-sm font-semibold hover:border-accent disabled:opacity-40'
+const button='hldrive-action rounded-lg border border-panel-border bg-panel-2 px-4 py-2 text-sm font-semibold hover:border-accent disabled:opacity-40'
 function eta(job, t) {
   if (!(job.speed > 0) || !(job.total > 0)) return ''
   const seconds=Math.max(0,Math.ceil((job.total-job.loaded)/job.speed))
@@ -70,8 +70,8 @@ export default function DriveView({connection,onOpenFiles}) {
   const filtered=(listing?.entries||[]).filter(e=>e.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
   const entries=[...filtered].sort((a,b)=>a.is_dir===b.is_dir?a.name.localeCompare(b.name,locale):a.is_dir?-1:1)
   const active=jobs.some(j=>j.state==='running'||j.state==='queued')
-  return <div className="mx-auto max-w-[1500px] space-y-5">
-    <section className="pmgr-panel rounded-2xl border border-panel-border p-5">
+  return <div className="hldrive-drive mx-auto max-w-[1500px] space-y-5">
+    <section className="hldrive-drive-panel pmgr-panel rounded-2xl border border-panel-border p-5">
       <h2 className="text-lg font-bold">{t('hldrive.library')}</h2>
       <p className="mt-1 text-sm text-text-dim">{t('hldrive.intro')}</p>
       <form className="mt-4 flex flex-wrap gap-3" onSubmit={e=>{e.preventDefault();browse(url,[])}}>
@@ -82,7 +82,7 @@ export default function DriveView({connection,onOpenFiles}) {
     </section>
     {error&&<div role="alert" className="rounded-xl border border-err/30 bg-err/10 p-4 text-sm text-err">{error}</div>}
     {notice&&<div role="status" className="rounded-xl bg-accent/10 p-4 text-sm">{t(`hldrive.${notice.key}`,notice.vars)}</div>}
-    {listing&&<section className="pmgr-panel overflow-hidden rounded-2xl border border-panel-border">
+    {listing&&<section className="hldrive-library-panel pmgr-panel overflow-hidden rounded-2xl border border-panel-border">
       <div className="flex flex-wrap items-center gap-2 border-b border-panel-border p-4">
         <nav aria-label={t('hldrive.folders')} className="flex flex-1 flex-wrap gap-2 text-sm">{crumbs.map((c,i)=><span key={`${c.url}-${i}`}><button disabled={busy||active} className="text-accent hover:underline" onClick={()=>browse(c.url,crumbs.slice(0,i))}>{c.name}</button>{i<crumbs.length-1?' / ':''}</span>)}</nav>
         <button className={button} disabled={busy||active} onClick={()=>browse(listing.url,crumbs.slice(0,-1))}>{t('hldrive.refresh')}</button>
@@ -104,16 +104,16 @@ export default function DriveView({connection,onOpenFiles}) {
       {!entries.length&&<p className="p-8 text-center text-text-dim">{search?t('hldrive.noResults'):t('hldrive.empty')}</p>}
       <p className="border-t border-panel-border p-4 text-xs text-text-dim">{t('hldrive.listingHint',{count:listing.entries.length})}</p>
     </section>}
-    <section className="pmgr-panel rounded-2xl border border-panel-border p-5">
+    <section className="hldrive-transfers-panel pmgr-panel rounded-2xl border border-panel-border p-5">
       <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold">{t('hldrive.transfers')}</h2><div className="flex flex-wrap gap-2">
         <button className={button} disabled={!jobs.some(j=>!['running','queued'].includes(j.state))} onClick={clearFinished}>{t('hldrive.clear')}</button>
         <button className={button} onClick={onOpenFiles}>{t('hldrive.openFiles')}</button></div></div>
       {pollError&&<p role="alert" className="mt-3 text-warn">{pollError}</p>}
       {!jobs.length&&<p className="py-8 text-center text-sm text-text-dim">{t('hldrive.emptyQueue')}</p>}
-      <div className="space-y-3 pt-4">{[...jobs].reverse().map(job=><article key={job.id} className="rounded-xl border border-panel-border bg-panel-2 p-4">
-        <div className="flex justify-between gap-3"><strong className="break-all text-sm">{job.name}</strong><span className="shrink-0 text-xs text-text-dim">{states[job.state]||job.state}</span></div>
+      <div className="space-y-3 pt-4">{[...jobs].reverse().map(job=><article key={job.id} data-state={job.state} className="hldrive-transfer-card rounded-xl border border-panel-border bg-panel-2 p-4">
+        <div className="flex justify-between gap-3"><strong className="break-all text-sm">{job.name}</strong><span className="hldrive-job-state shrink-0 text-xs text-text-dim">{states[job.state]||job.state}</span></div>
         <p className="mt-1 break-all text-xs text-text-dim">{job.current||job.destination}</p>
-        {job.state==='running'&&<><progress aria-label={t('hldrive.progress',{name:job.name})} className="mt-3 h-2 w-full" max={job.total>0?job.total:undefined} value={job.total>0?job.loaded:undefined}/><p className="mt-1 text-xs text-text-dim">{size(job.loaded,t)}{job.total>0?t('hldrive.ofTotal',{total:size(job.total,t)}):''}{job.speed>0?` · ${speedLabel(job.speed,t)} · ${eta(job,t)}`:''}</p></>}
+        {job.state==='running'&&<><progress className="hldrive-progress mt-3 h-2 w-full" aria-label={t('hldrive.progress',{name:job.name})} max={job.total>0?job.total:undefined} value={job.total>0?job.loaded:undefined}/><p className="mt-1 text-xs text-text-dim">{size(job.loaded,t)}{job.total>0?t('hldrive.ofTotal',{total:size(job.total,t)}):''}{job.speed>0?` · ${speedLabel(job.speed,t)} · ${eta(job,t)}`:''}</p></>}
         <p className="mt-2 text-xs text-text-dim">{t('hldrive.totals',{files:job.files||0,skipped:job.skipped||0})}</p>
         {job.average_speed>0&&<p className="mt-1 text-xs text-text-dim">{t('hldrive.averageSpeed',{speed:speedLabel(job.average_speed,t)})}</p>}
         {job.transport_reason>=0&&<p className="mt-1 text-xs text-text-dim">{job.transport_reason===0?t('hldrive.parallelMode',{active:job.connections||0,max:job.max_connections||0}):t(`hldrive.sequentialReason${job.transport_reason}`)}</p>}

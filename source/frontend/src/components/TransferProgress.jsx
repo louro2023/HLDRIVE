@@ -26,19 +26,19 @@ export function formatEta(seconds) {
 // there's genuinely nothing to measure (e.g. AppInstUtil's own install step).
 export default function TransferProgress({ label, pct, indeterminate, sub }) {
   return (
-    <div className="mb-3 rounded-lg border border-panel-border bg-panel p-3 text-xs">
+    <div className="hldrive-transfer-progress mb-3 rounded-lg border border-panel-border bg-panel p-3 text-xs">
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-text-dim">
         <span className="min-w-0 truncate font-medium text-text">{label}</span>
         {sub && <span className="pmgr-mono text-xs">{sub}</span>}
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-panel-border">
+      <div className="hldrive-progress-track h-2 overflow-hidden rounded-full bg-panel-border">
         <div
           role="progressbar"
           aria-label={label}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={indeterminate ? undefined : Math.round(pct)}
-          className={`h-full rounded-full bg-info transition-[width] duration-200 ${
+          className={`hldrive-progress-fill h-full rounded-full bg-info transition-[width] duration-200 ${
             indeterminate ? 'pmgr-indeterminate' : ''
           }`}
           style={indeterminate ? undefined : { width: `${pct}%` }}

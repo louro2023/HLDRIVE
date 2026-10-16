@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './hldrive.css'
 import App from './App.jsx'
 import { ToastProvider } from './lib/ToastContext.jsx'
 import { applyEffects, isPS5, loadReducedEffects } from './lib/effects.js'

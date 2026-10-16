@@ -1,5 +1,13 @@
 # Histórico de alterações
 
+## v1.1.0 — 2026-10-16 — pré-release
+
+- Modernização visual: superfícies em azul grafite, detalhes em azul/ciano, botões, cartões, navegação lateral, ícones e diálogos consistentes.
+- Barras de progresso com gradiente, transições suaves e tratamento visual distinto do carregamento indeterminado. Valores e semântica de progresso preservados.
+- Ajustes para telas de 360 a 1920 pixels, tema claro/escuro e preferências de movimento reduzido, mantendo foco por teclado e controle.
+- Fluxos, APIs e motor de download preservados em relação à 1.0.3-rc.1. Alterações de backend limitadas à versão e aos recursos visuais incorporados.
+- Arquivo distribuído como `HLDRIVE 1.1.0.elf`. Validação local e limitações descritas em `docs/releases/v1.1.0.md`.
+
 ## v1.0.3-rc.1 — 2026-10-16 — pré-release
 
 - Tratamento ampliado das confirmações de download do Drive e cookies anônimos em memória, com avisos no painel.
