@@ -4,7 +4,7 @@
 
 Gerenciador de arquivos homebrew para PS5, com navegação em pastas públicas do Google Drive e download direto para o console. Interface, imagens e recursos estão incorporados em um único arquivo `HLDRIVE.elf`.
 
-> **Versão 1.0.2 — seleção de idiomas com bandeiras.** A base 1.0.1 teve downloads confirmados pelo usuário no PS5, acima de 500 Mb/s em seu teste. A mudança de idiomas da 1.0.2 foi validada em navegador com APIs e controle simulados; ainda precisa de confirmação no console. A velocidade depende da rede, do PS5 e da resposta do Google Drive.
+> **Pré-release 1.0.3-rc.1 — melhorias nos downloads.** Confirmações de arquivos grandes, até 16 conexões, gravações agrupadas e painel com Mbps/MiB/s. Build e testes locais passaram; o desempenho ainda precisa de validação no PS5. [Baixar pré-release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.3-rc.1) · [Notas e limitações](docs/releases/v1.0.3-rc.1.md).
 
 **Downloads:** [ELF 1.0.2](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf.sha256) · [Release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.2)
 
@@ -18,7 +18,7 @@ Veja a [galeria de telas](docs/GALLERY.md), [histórico de alterações](CHANGEL
 
 - Abrir links públicos do Drive e navegar por subpastas.
 - Selecionar arquivos e pastas e escolher o destino no PS5.
-- Acelerar arquivos grandes com até oito conexões simultâneas por arquivo quando o Drive oferecer suporte a intervalos; os arquivos escolhidos são baixados em fila.
+- Acelerar arquivos grandes com até 16 conexões simultâneas por arquivo, segmentos de 8 MiB e gravações agrupadas quando o Drive oferecer intervalos e um identificador forte; os arquivos escolhidos são baixados em fila. O painel mostra velocidade em Mbps/MiB/s, média, conexões ativas e motivo de usar conexão única.
 - Baixar itens selecionados ou copiar e colar arquivos no console.
 - Preservar pastas, acompanhar progresso e cancelar transferências.
 - Navegar, copiar, mover, renomear e excluir arquivos locais.

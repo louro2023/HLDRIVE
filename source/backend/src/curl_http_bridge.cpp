@@ -9,6 +9,7 @@
 #include <cerrno>
 #include <cctype>
 #include <chrono>
+#include <condition_variable>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -21,18 +22,44 @@
 #include <vector>
 
 namespace {
+static_assert(sizeof(off_t)>=8,"Drive downloads require 64-bit file offsets");
 using Clock=std::chrono::steady_clock;
 constexpr size_t kBodyCap=8u*1024u*1024u;
 constexpr long kCurlBufferSize=256L*1024L;
 constexpr long long kParallelDownloadThreshold=32LL*1024LL*1024LL;
-constexpr int kParallelDownloadConnections=8;
+constexpr int kParallelDownloadConnections=16;
+constexpr long long kSegmentBytes=8LL*1024LL*1024LL;
+constexpr size_t kWriteBufferBytes=1024u*1024u;
+struct Metrics {
+    std::atomic<int> active{0}, maximum{0}, reason{1};
+    std::atomic<long long> calls{0}, bytes{0}, write_us{0};
+    void reset(){active=0;maximum=0;reason=1;calls=0;bytes=0;write_us=0;}
+} metrics;
 std::once_flag curl_once;
 int curl_init_result=CURLE_FAILED_INIT;
 std::atomic<int> stage{0};
-void init_curl(){curl_init_result=(int)curl_global_init(CURL_GLOBAL_DEFAULT);}
+CURLSH *cookie_share=nullptr;
+std::mutex cookie_locks[CURL_LOCK_DATA_LAST];
+void lock_cookies(CURL *,curl_lock_data data,curl_lock_access,void *){cookie_locks[data].lock();}
+void unlock_cookies(CURL *,curl_lock_data data,void *){cookie_locks[data].unlock();}
+void init_curl(){
+    curl_init_result=(int)curl_global_init(CURL_GLOBAL_DEFAULT);
+    if(curl_init_result!=CURLE_OK)return;
+    cookie_share=curl_share_init();
+    if(!cookie_share){curl_init_result=CURLE_OUT_OF_MEMORY;return;}
+    if(curl_share_setopt(cookie_share,CURLSHOPT_LOCKFUNC,lock_cookies)!=CURLSHE_OK ||
+       curl_share_setopt(cookie_share,CURLSHOPT_UNLOCKFUNC,unlock_cookies)!=CURLSHE_OK ||
+       curl_share_setopt(cookie_share,CURLSHOPT_SHARE,CURL_LOCK_DATA_COOKIE)!=CURLSHE_OK){
+        curl_share_cleanup(cookie_share);cookie_share=nullptr;curl_init_result=CURLE_FAILED_INIT;
+    }
+}
 struct ParallelProgress {
     std::atomic<long long> loaded{0};
     std::atomic<bool> abort{false};
+    std::atomic<long long> next{0};
+    std::atomic<int> finished{0};
+    std::mutex wake_mu;
+    std::condition_variable wake;
     long long total=0;
     prosperomgr_ps5_http_progress_fn progress=nullptr;
     void *progress_data=nullptr;
@@ -43,6 +70,7 @@ struct Transfer {
     std::string location;
     std::string content_disposition;
     std::string etag;
+    std::string content_encoding;
     long status=0;
     long long content_length=-1;
     long long response_range_start=-1, response_range_end=-1, response_range_total=-1;
@@ -63,6 +91,8 @@ struct Transfer {
     void *cancel_data=nullptr;
     std::atomic<long long> *aggregate_loaded=nullptr;
     curl_slist *request_headers=nullptr;
+    std::vector<char> disk_buffer;
+    Clock::time_point last_publish{};
 };
 std::string lower(std::string s){for(char &c:s)c=(char)std::tolower((unsigned char)c);return s;}
 bool allowed(const std::string &url){
@@ -89,24 +119,55 @@ std::string resolve_location(const std::string &base,const std::string &loc){
 }
 size_t header_cb(char *data,size_t size,size_t count,void *opaque){
     auto &t=*static_cast<Transfer*>(opaque); size_t n=size*count;
-    if(n>=5&&!std::memcmp(data,"HTTP/",5)){t.location.clear();t.content_disposition.clear();t.etag.clear();t.body.clear();t.attachment=false;t.content_length=-1;t.response_range_start=t.response_range_end=t.response_range_total=-1;t.range_valid=false;t.status=0;std::sscanf(data,"HTTP/%*s %ld",&t.status);}
+    if(n>=5&&!std::memcmp(data,"HTTP/",5)){t.location.clear();t.content_disposition.clear();t.etag.clear();t.content_encoding.clear();t.body.clear();t.attachment=false;t.content_length=-1;t.response_range_start=t.response_range_end=t.response_range_total=-1;t.range_valid=false;t.status=0;std::sscanf(data,"HTTP/%*s %ld",&t.status);}
+    if(n>=17&&!strncasecmp(data,"Content-Encoding:",17)){size_t p=17;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&std::isspace((unsigned char)data[e-1]))--e;t.content_encoding=lower(std::string(data+p,e-p));}
     if(n>=9&&!strncasecmp(data,"Location:",9)){size_t p=9;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;t.location.assign(data+p,e-p);}
     if(n>=20&&!strncasecmp(data,"Content-Disposition:",20)){size_t p=20;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;t.content_disposition.assign(data+p,e-p);t.attachment=lower(t.content_disposition).find("attachment")!=std::string::npos;}
     if(n>=5&&!strncasecmp(data,"ETag:",5)){size_t p=5;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;t.etag.assign(data+p,e-p);}
     if(n>=14&&!strncasecmp(data,"Content-Range:",14)){char value[128]{};size_t p=14;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;size_t len=std::min(e-p,sizeof(value)-1);std::memcpy(value,data+p,len);long long first=-1,last=-1,total=-1;if(std::sscanf(value,"bytes %lld-%lld/%lld",&first,&last,&total)==3){t.response_range_start=first;t.response_range_end=last;t.response_range_total=total;}}
     if(n>=15&&!strncasecmp(data,"Content-Length:",15)){char value[40]{};size_t p=15;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;size_t l=std::min(e-p,sizeof(value)-1);std::memcpy(value,data+p,l);char *end=nullptr;long long v=std::strtoll(value,&end,10);if(end!=value&&v>=0)t.content_length=v;}
     if(n==2&&data[0]=='\r'&&data[1]=='\n'){
-        if(t.range_mode){t.range_valid=t.status==206&&t.response_range_start==t.request_range_start&&t.response_range_end==t.request_range_end&&t.response_range_total>0&&(t.request_range_total<0||t.response_range_total==t.request_range_total)&&(t.expected_etag.empty()||t.etag==t.expected_etag);}
+        if(t.range_mode){t.range_valid=t.status==206&&t.response_range_start==t.request_range_start&&t.response_range_end==t.request_range_end&&t.response_range_total>0&&(t.request_range_total<0||t.response_range_total==t.request_range_total)&&(t.expected_etag.empty()||t.etag==t.expected_etag)&&(t.content_encoding.empty()||t.content_encoding=="identity");}
         // Open only after a successful response explicitly identifies a file attachment.
         if(t.save_file&&t.attachment&&t.status>=200&&t.status<300&&t.fd<0&&t.path){t.fd=open(t.path,O_WRONLY|O_CREAT|O_EXCL,0644);if(t.fd<0){t.write_error=true;t.write_errno=errno;}}
     }
     return n;
 }
+bool flush_disk(Transfer &t){
+    if(t.disk_buffer.empty())return true;
+    const auto started=Clock::now();size_t off=0;
+    while(off<t.disk_buffer.size()){
+        if(t.cancel&&t.cancel(t.cancel_data)){t.canceled=true;return false;}
+        ssize_t w=t.range_mode?pwrite(t.fd,t.disk_buffer.data()+off,t.disk_buffer.size()-off,(off_t)(t.request_range_start+t.written+off)):
+                              write(t.fd,t.disk_buffer.data()+off,t.disk_buffer.size()-off);
+        metrics.calls++;
+        if(w<0&&errno==EINTR)continue;
+        if(w<=0){t.write_error=true;t.write_errno=errno?errno:EIO;return false;}
+        off+=(size_t)w;
+    }
+    metrics.write_us+=std::chrono::duration_cast<std::chrono::microseconds>(Clock::now()-started).count();
+    metrics.bytes+=(long long)off;t.written+=(long long)off;
+    if(t.aggregate_loaded)t.aggregate_loaded->fetch_add((long long)off);
+    t.disk_buffer.clear();return true;
+}
 size_t body_cb(char *data,size_t size,size_t count,void *opaque){
     auto &t=*static_cast<Transfer*>(opaque);size_t n=size*count;
     if(t.range_probe&&t.status==206){if(!t.range_valid){t.range_invalid=true;return 0;}return 0;} // A one-byte probe only needs response headers.
     if(t.probe&&t.attachment)return 0; // stop after headers; no file bytes are buffered
-    if(t.save_file){if(t.status>=300&&t.status<400)return n;if(t.range_mode){if(!t.range_valid){t.range_invalid=true;return 0;}size_t off=0;while(off<n){ssize_t w=pwrite(t.fd,data+off,n-off,(off_t)(t.request_range_start+t.written));if(w<0&&errno==EINTR)continue;if(w<=0){t.write_error=true;t.write_errno=errno;return 0;}off+=(size_t)w;}t.written+=(long long)n;return n;}if(!t.attachment||t.fd<0)return 0;size_t off=0;while(off<n){ssize_t w=write(t.fd,data+off,n-off);if(w<0&&errno==EINTR)continue;if(w<=0){t.write_error=true;t.write_errno=errno;return 0;}off+=(size_t)w;}t.written+=(long long)n;return n;}
+    if(t.save_file){
+        if(t.status>=300&&t.status<400)return n;
+        if(!t.attachment||t.fd<0)return 0;
+        if(t.range_mode && (!t.range_valid || (long long)n>t.request_range_end-t.request_range_start+1-t.written-(long long)t.disk_buffer.size())){t.range_invalid=true;return 0;}
+        try {
+            if(t.disk_buffer.capacity()<kWriteBufferBytes)t.disk_buffer.reserve(kWriteBufferBytes);
+            for(size_t off=0;off<n;){
+                size_t take=std::min(n-off,kWriteBufferBytes-t.disk_buffer.size());
+                t.disk_buffer.insert(t.disk_buffer.end(),data+off,data+off+take);off+=take;
+                if(t.disk_buffer.size()==kWriteBufferBytes&&!flush_disk(t))return 0;
+            }
+        } catch(...){t.write_error=true;t.write_errno=ENOMEM;return 0;}
+        return n;
+    }
     if(t.body.size()>t.cap||n>t.cap-t.body.size()){t.overflow=true;return 0;}
     t.body.append(data,n);return n;
 }
@@ -114,8 +175,10 @@ int xfer_cb(void *opaque,curl_off_t total,curl_off_t now,curl_off_t,curl_off_t){
     auto &t=*static_cast<Transfer*>(opaque);
     if(t.cancel&&t.cancel(t.cancel_data)){t.canceled=true;return 1;}
     t.total=total>0?(long long)total:-1;
-    if(t.progress&&t.aggregate_loaded){long long current=(long long)now;if(current>t.last_progress_now){long long delta=current-t.last_progress_now;t.last_progress_now=current;long long loaded=t.aggregate_loaded->fetch_add(delta)+delta;t.progress(loaded,t.aggregate_total,t.progress_data);}}
-    else if(t.progress)t.progress((long long)now,t.total,t.progress_data);
+    auto tick=Clock::now();
+    if(t.progress && tick-t.last_publish>=std::chrono::milliseconds(250)){
+        t.last_publish=tick;t.progress(t.written,t.total,t.progress_data);
+    }
     return 0;
 }
 void set_result(prosperomgr_http_result *r,int kind,long status,long long code,int where){
@@ -133,8 +196,14 @@ int curl_failure(CURLcode code,Transfer &t,prosperomgr_http_result *r){
 bool configure(CURL *c,const std::string &url,Transfer &t,const char *hn,const char *hv,curl_slist **headers){
     if(!c||!allowed(url))return false;
     console_curl_setup(c);
+    // Keep anonymous confirmation cookies between probe, redirect and download
+    // handles, including parallel ranges. Nothing is written to a cookie file.
+    if(!cookie_share || curl_easy_setopt(c,CURLOPT_SHARE,cookie_share)!=CURLE_OK ||
+       curl_easy_setopt(c,CURLOPT_COOKIEFILE,"")!=CURLE_OK)return false;
     curl_easy_setopt(c,CURLOPT_URL,url.c_str());curl_easy_setopt(c,CURLOPT_HTTP_VERSION,(long)CURL_HTTP_VERSION_1_1);
     curl_easy_setopt(c,CURLOPT_BUFFERSIZE,kCurlBufferSize);
+    curl_easy_setopt(c,CURLOPT_TCP_KEEPALIVE,1L);
+    curl_easy_setopt(c,CURLOPT_ACCEPT_ENCODING,"identity");
     curl_easy_setopt(c,CURLOPT_PROTOCOLS_STR,"https");curl_easy_setopt(c,CURLOPT_REDIR_PROTOCOLS_STR,"https");
     curl_easy_setopt(c,CURLOPT_FOLLOWLOCATION,0L);curl_easy_setopt(c,CURLOPT_CONNECTTIMEOUT_MS,20000L);
     curl_easy_setopt(c,CURLOPT_LOW_SPEED_LIMIT,1L);curl_easy_setopt(c,CURLOPT_LOW_SPEED_TIME,25L);
@@ -146,22 +215,22 @@ bool configure(CURL *c,const std::string &url,Transfer &t,const char *hn,const c
     if(t.head)curl_easy_setopt(c,CURLOPT_NOBODY,1L);
     return true;
 }
-int run(const char *input,Transfer &t,const char *hn,const char *hv,prosperomgr_http_result *r,std::string *resolved_url=nullptr){
+int run(const char *input,Transfer &t,const char *hn,const char *hv,prosperomgr_http_result *r,std::string *resolved_url=nullptr,CURL *reusable=nullptr){
     std::call_once(curl_once,init_curl);
     if(curl_init_result!=CURLE_OK){set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,-10000-curl_init_result,1);return -1;}
     std::string url=input?input:"";
     if(!allowed(url)){set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,0,1);return -1;}
     for(int hop=0;hop<=5;++hop){
-        CURL *c=curl_easy_init();if(!c){set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,-10000-(int)CURLE_FAILED_INIT,1);return -1;}
-        t.location.clear();t.status=0;
-        curl_slist *headers=nullptr;if(!configure(c,url,t,hn,hv,&headers)){curl_easy_cleanup(c);curl_slist_free_all(headers);set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,0,1);return -1;}
+        CURL *c=reusable?reusable:curl_easy_init();if(!c){set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,-10000-(int)CURLE_FAILED_INIT,1);return -1;}
+        curl_easy_reset(c);t.location.clear();t.status=0;
+        curl_slist *headers=nullptr;if(!configure(c,url,t,hn,hv,&headers)){if(!reusable)curl_easy_cleanup(c);curl_slist_free_all(headers);set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,0,1);return -1;}
         stage=5;CURLcode code=curl_easy_perform(c);curl_easy_getinfo(c,CURLINFO_RESPONSE_CODE,&t.status);
         if(code!=CURLE_OK){
             // Probe mode intentionally aborts an attachment after seeing its headers.
             bool expected=t.probe&&(t.attachment||t.range_probe)&&code==CURLE_WRITE_ERROR&&t.status>=200&&t.status<300;
-            curl_easy_cleanup(c);curl_slist_free_all(headers);if(expected){if(resolved_url)*resolved_url=url;set_result(r,PROSPEROMGR_HTTP_OK,t.status,0,7);return 0;}return curl_failure(code,t,r);
+            if(!reusable)curl_easy_cleanup(c);curl_slist_free_all(headers);if(expected){if(resolved_url)*resolved_url=url;set_result(r,PROSPEROMGR_HTTP_OK,t.status,0,7);return 0;}return curl_failure(code,t,r);
         }
-        curl_easy_cleanup(c);curl_slist_free_all(headers);
+        if(!reusable)curl_easy_cleanup(c);curl_slist_free_all(headers);
         if(t.status>=300&&t.status<400&&!t.location.empty()){
             if(hop==5){set_result(r,PROSPEROMGR_HTTP_ERR_HTTP,t.status,0,7);return -1;}
             url=resolve_location(url,t.location);if(!allowed(url)){set_result(r,PROSPEROMGR_HTTP_ERR_HTTP,403,0,7);return -1;}continue;
@@ -175,14 +244,10 @@ int parallel_cancel(void *opaque){
     auto &state=*static_cast<ParallelProgress*>(opaque);
     return state.abort.load()||(state.cancel&&state.cancel(state.cancel_data));
 }
-void parallel_progress(long long loaded,long long total,void *opaque){
-    auto &state=*static_cast<ParallelProgress*>(opaque);
-    if(state.progress)state.progress(loaded,total,state.progress_data);
-}
 bool strong_etag(const std::string &etag){return etag.size()>=2&&etag.rfind("W/",0)!=0&&etag.front()=='"'&&etag.back()=='"';}
 int download_parallel(const std::string &url,const std::string &path,long long total,const std::string &etag,
                       prosperomgr_http_result *result,prosperomgr_ps5_http_progress_fn progress,void *progress_data,
-                      prosperomgr_ps5_http_cancel_fn cancel,void *cancel_data){
+                      prosperomgr_ps5_http_cancel_fn cancel,void *cancel_data,int connection_limit=kParallelDownloadConnections){
     const auto started=Clock::now();
     if(progress)progress(0,total,progress_data);
     if(cancel&&cancel(cancel_data)){set_result(result,PROSPEROMGR_HTTP_ERR_CANCELED,0,0,10);return -1;}
@@ -192,33 +257,52 @@ int download_parallel(const std::string &url,const std::string &path,long long t
 
     ParallelProgress state;state.total=total;state.progress=progress;state.progress_data=progress_data;state.cancel=cancel;state.cancel_data=cancel_data;
     std::mutex result_mutex;prosperomgr_http_result first_error{};bool have_error=false;
-    std::vector<std::thread> workers;workers.reserve(kParallelDownloadConnections);
-    const long long chunk=total/kParallelDownloadConnections+(total%kParallelDownloadConnections?1:0);
+    const int connections=(int)std::min<long long>(std::clamp(connection_limit,1,kParallelDownloadConnections),(total+kSegmentBytes-1)/kSegmentBytes);
+    metrics.reason=0;metrics.maximum=connections;
+    std::vector<std::thread> workers;workers.reserve(connections);
     try {
-        for(int index=0;index<kParallelDownloadConnections;++index){
-            const long long start=chunk*index;
-            if(start>=total)break;
-            const long long end=std::min(total-1,start+chunk-1);
-            workers.emplace_back([&,start,end]{
-                Transfer part;part.save_file=true;part.range_mode=true;part.fd=fd;part.request_range_start=start;part.request_range_end=end;part.request_range_total=total;part.expected_etag=etag;
-                part.progress=parallel_progress;part.progress_data=&state;part.cancel=parallel_cancel;part.cancel_data=&state;part.aggregate_loaded=&state.loaded;part.aggregate_total=total;
-                const std::string range="Range: bytes="+std::to_string(start)+"-"+std::to_string(end);
-                const std::string if_range="If-Range: "+etag;
-                const std::string encoding="Accept-Encoding: identity";
-                part.request_headers=curl_slist_append(part.request_headers,range.c_str());
-                part.request_headers=curl_slist_append(part.request_headers,if_range.c_str());
-                part.request_headers=curl_slist_append(part.request_headers,encoding.c_str());
-                prosperomgr_http_result local{};
-                int rc=run(url.c_str(),part,nullptr,nullptr,&local);
-                curl_slist_free_all(part.request_headers);
-                const long long expected=end-start+1;
-                if(rc==0&&(part.status!=206||!part.range_valid||part.written!=expected)){
-                    set_result(&local,PROSPEROMGR_HTTP_ERR_HTTP,part.status,0,7);rc=-1;
+        for(int index=0;index<connections;++index){
+            workers.emplace_back([&]{
+                CURL *handle=curl_easy_init();
+                try {
+                    if(!handle)throw std::bad_alloc();
+                    std::vector<char> buffer;buffer.reserve(kWriteBufferBytes);
+                    while(!parallel_cancel(&state)){
+                        const long long start=state.next.fetch_add(kSegmentBytes);
+                        if(start>=total)break;
+                        const long long end=std::min(total-1,start+kSegmentBytes-1);
+                        Transfer part;part.save_file=true;part.range_mode=true;part.fd=fd;part.request_range_start=start;part.request_range_end=end;part.request_range_total=total;part.expected_etag=etag;
+                        part.cancel=parallel_cancel;part.cancel_data=&state;part.aggregate_loaded=&state.loaded;
+                        part.disk_buffer.swap(buffer);
+                        const std::string range="Range: bytes="+std::to_string(start)+"-"+std::to_string(end);
+                        const std::string if_range="If-Range: "+etag;
+                        curl_slist *headers=nullptr;
+                        for(const auto &header:{range,if_range}){
+                            auto *next=curl_slist_append(headers,header.c_str());
+                            if(!next){curl_slist_free_all(headers);throw std::bad_alloc();}headers=next;
+                        }
+                        part.request_headers=headers;
+                        prosperomgr_http_result local{};
+                        metrics.active++;
+                        int rc=run(url.c_str(),part,nullptr,nullptr,&local,nullptr,handle);
+                        if(rc==0&&!flush_disk(part)){curl_failure(part.canceled?CURLE_ABORTED_BY_CALLBACK:CURLE_WRITE_ERROR,part,&local);rc=-1;}
+                        metrics.active--;
+                        curl_slist_free_all(headers);
+                        buffer.swap(part.disk_buffer);buffer.clear();
+                        if(rc==0&&(part.status!=206||!part.range_valid||part.written!=end-start+1)){
+                            set_result(&local,PROSPEROMGR_HTTP_ERR_HTTP,part.status,0,7);rc=-1;
+                        }
+                        if(rc!=0){
+                            if(!state.abort.exchange(true)){std::lock_guard<std::mutex> lock(result_mutex);first_error=local;have_error=true;}
+                            break;
+                        }
+                    }
+                } catch(...) {
+                    state.abort=true;std::lock_guard<std::mutex> lock(result_mutex);
+                    set_result(&first_error,PROSPEROMGR_HTTP_ERR_OTHER,0,ENOMEM,1);have_error=true;
                 }
-                if(rc!=0){
-                    bool was_aborted=state.abort.exchange(true);
-                    if(!was_aborted){std::lock_guard<std::mutex> lock(result_mutex);first_error=local;have_error=true;}
-                }
+                if(handle)curl_easy_cleanup(handle);
+                state.finished++;state.wake.notify_one();
             });
         }
     } catch(...) {
@@ -226,7 +310,16 @@ int download_parallel(const std::string &url,const std::string &path,long long t
         std::lock_guard<std::mutex> lock(result_mutex);
         set_result(&first_error,PROSPEROMGR_HTTP_ERR_OTHER,0,ENOMEM,1);have_error=true;
     }
+    // Only this thread publishes progress; disk/network workers never contend
+    // on the UI/job mutex or race the caller's progress context.
+    auto last_publish=Clock::now();
+    while(state.finished.load()<(int)workers.size()){
+        {std::unique_lock<std::mutex> lock(state.wake_mu);state.wake.wait_until(lock,last_publish+std::chrono::milliseconds(250),[&]{return state.finished.load()==(int)workers.size();});}
+        if(progress)progress(state.loaded.load(),total,progress_data);
+        last_publish=Clock::now();
+    }
     for(auto &worker:workers)if(worker.joinable())worker.join();
+    metrics.active=0;
     if(have_error||state.abort.load()){
         close(fd);unlink(path.c_str());
         if(have_error&&result)*result=first_error;
@@ -235,10 +328,14 @@ int download_parallel(const std::string &url,const std::string &path,long long t
     }
     if(fsync(fd)!=0){int error=errno;close(fd);unlink(path.c_str());set_result(result,PROSPEROMGR_HTTP_ERR_WRITE,206,error,10);return -1;}
     close(fd);
+    if(progress)progress(total,total,progress_data);
     set_result(result,PROSPEROMGR_HTTP_OK,206,0,7);
-    if(result){result->bytes=total;result->total_ms=std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-started).count();}
+    if(result){result->bytes=total;result->total_ms=std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-started).count();result->write_ms=metrics.write_us.load()/1000;}
     return 0;
 }
+}
+extern "C" void hldrive_http_download_metrics(hldrive_download_metrics *out){
+    if(out)*out={metrics.active.load(),metrics.maximum.load(),metrics.reason.load(),metrics.calls.load(),metrics.bytes.load(),metrics.write_us.load()};
 }
 extern "C" int prosperomgr_ps5_http_stage(void){return stage.load();}
 extern "C" int prosperomgr_ps5_http_get(const char *url,char **out,size_t *out_len,size_t cap,const char *hn,const char *hv,prosperomgr_http_result *r){
@@ -256,6 +353,7 @@ extern "C" int prosperomgr_ps5_http_range(const char *url,long long start,long l
     if(out)*out=0;if(!allowed(url?url:"")){set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,0,1);return -1;}Transfer t;t.cap=cap;std::call_once(curl_once,init_curl);if(curl_init_result!=CURLE_OK)return -1;std::string range=std::to_string(start)+"-"+std::to_string(end);CURL *c=curl_easy_init();if(!c)return -1;console_curl_setup(c);curl_easy_setopt(c,CURLOPT_URL,url);curl_easy_setopt(c,CURLOPT_RANGE,range.c_str());curl_easy_setopt(c,CURLOPT_PROTOCOLS_STR,"https");curl_easy_setopt(c,CURLOPT_SSL_VERIFYPEER,1L);curl_easy_setopt(c,CURLOPT_SSL_VERIFYHOST,2L);curl_easy_setopt(c,CURLOPT_WRITEFUNCTION,body_cb);curl_easy_setopt(c,CURLOPT_WRITEDATA,&t);t.cap=cap;CURLcode code=curl_easy_perform(c);curl_easy_getinfo(c,CURLINFO_RESPONSE_CODE,&t.status);curl_easy_cleanup(c);if(code!=CURLE_OK||t.status!=206){set_result(r,PROSPEROMGR_HTTP_ERR_HTTP,t.status,-10000-(int)code,5);return -1;}std::memcpy(buf,t.body.data(),t.body.size());if(out)*out=t.body.size();set_result(r,PROSPEROMGR_HTTP_OK,t.status,0,7);return 0;
 }
 extern "C" int prosperomgr_ps5_http_download(const char *url,const char *path,prosperomgr_http_result *r,prosperomgr_ps5_http_progress_fn progress,void *progress_data,prosperomgr_ps5_http_cancel_fn cancel,void *cancel_data){
+    const auto download_started=Clock::now();metrics.reset();
     std::call_once(curl_once,init_curl);if(curl_init_result!=CURLE_OK){set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,-10000-curl_init_result,1);return -1;}
     Transfer t;t.save_file=true;t.progress=progress;t.progress_data=progress_data;t.cancel=cancel;t.cancel_data=cancel_data;t.path=path;t.cap=0;
     // Downloads are streamed to a unique .part path; create it only after an attachment response.
@@ -269,18 +367,25 @@ extern "C" int prosperomgr_ps5_http_download(const char *url,const char *path,pr
     if(cancel&&cancel(cancel_data)){set_result(r,PROSPEROMGR_HTTP_ERR_CANCELED,probe.status,0,10);return -1;}
     if(probe_rc==0&&probe.status==206&&probe.range_valid&&probe.attachment&&strong_etag(probe.etag)&&probe.response_range_total>=kParallelDownloadThreshold&&allowed(range_url)){
         int parallel_rc=download_parallel(range_url,path,probe.response_range_total,probe.etag,r,progress,progress_data,cancel,cancel_data);
-        if(parallel_rc!=0)unlink(path);
         return parallel_rc;
     }
+    metrics.reason=probe_rc!=0?1:(!probe.range_valid||!probe.attachment)?2:!strong_etag(probe.etag)?3:4;
+    metrics.maximum=1;metrics.active=1;
+    struct EndActive {~EndActive(){metrics.active=0;}} end_active;
     int rc=-1;
-    for(int hop=0;hop<=5;++hop){CURL *c=curl_easy_init();if(!c)break;t.location.clear();t.status=0;t.attachment=false;console_curl_setup(c);curl_easy_setopt(c,CURLOPT_URL,url_now.c_str());curl_easy_setopt(c,CURLOPT_HTTP_VERSION,(long)CURL_HTTP_VERSION_1_1);curl_easy_setopt(c,CURLOPT_BUFFERSIZE,kCurlBufferSize);curl_easy_setopt(c,CURLOPT_PROTOCOLS_STR,"https");curl_easy_setopt(c,CURLOPT_FOLLOWLOCATION,0L);curl_easy_setopt(c,CURLOPT_CONNECTTIMEOUT_MS,20000L);curl_easy_setopt(c,CURLOPT_LOW_SPEED_LIMIT,1L);curl_easy_setopt(c,CURLOPT_LOW_SPEED_TIME,25L);curl_easy_setopt(c,CURLOPT_SSL_VERIFYPEER,1L);curl_easy_setopt(c,CURLOPT_SSL_VERIFYHOST,2L);curl_easy_setopt(c,CURLOPT_HEADERFUNCTION,header_cb);curl_easy_setopt(c,CURLOPT_HEADERDATA,&t);curl_easy_setopt(c,CURLOPT_WRITEFUNCTION,body_cb);curl_easy_setopt(c,CURLOPT_WRITEDATA,&t);curl_easy_setopt(c,CURLOPT_NOPROGRESS,0L);curl_easy_setopt(c,CURLOPT_XFERINFOFUNCTION,xfer_cb);curl_easy_setopt(c,CURLOPT_XFERINFODATA,&t);
+    for(int hop=0;hop<=5;++hop){
+        CURL *c=curl_easy_init();if(!c)break;t.location.clear();t.status=0;t.attachment=false;
+        if(!configure(c,url_now,t,nullptr,nullptr,nullptr)){curl_easy_cleanup(c);set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,0,1);break;}
         stage=5;CURLcode code=curl_easy_perform(c);curl_easy_getinfo(c,CURLINFO_RESPONSE_CODE,&t.status);curl_off_t total=0;(void)curl_easy_getinfo(c,CURLINFO_CONTENT_LENGTH_DOWNLOAD_T,&total);t.total=total>0?(long long)total:-1;curl_easy_cleanup(c);
         if(code!=CURLE_OK){if(code==CURLE_WRITE_ERROR&&t.status>=200&&t.status<300&&!t.attachment){set_result(r,PROSPEROMGR_HTTP_ERR_HTTP,409,0,7);}else if(code==CURLE_WRITE_ERROR&&t.status>=400){set_result(r,PROSPEROMGR_HTTP_ERR_HTTP,t.status,0,7);}else curl_failure(code,t,r);rc=-1;break;}
         if(t.status>=300&&t.status<400&&!t.location.empty()){url_now=resolve_location(url_now,t.location);if(hop==5||!allowed(url_now)){set_result(r,PROSPEROMGR_HTTP_ERR_HTTP,403,0,7);rc=-1;break;}continue;}
         if(t.status<200||t.status>=300){set_result(r,PROSPEROMGR_HTTP_ERR_HTTP,t.status,0,7);rc=-1;break;}
         if(!t.attachment){set_result(r,PROSPEROMGR_HTTP_ERR_HTTP,409,0,7);rc=-1;break;}
         if(t.fd<0){set_result(r,PROSPEROMGR_HTTP_ERR_WRITE,t.status,errno?errno:EIO,9);rc=-1;break;}
-        if(fsync(t.fd)!=0){set_result(r,PROSPEROMGR_HTTP_ERR_WRITE,t.status,errno,10);rc=-1;break;}close(t.fd);t.fd=-1;set_result(r,PROSPEROMGR_HTTP_OK,t.status,0,7);if(r){r->bytes=t.written;r->total_ms=0;}rc=0;break;
+        if(!flush_disk(t)){curl_failure(t.canceled?CURLE_ABORTED_BY_CALLBACK:CURLE_WRITE_ERROR,t,r);rc=-1;break;}
+        if(fsync(t.fd)!=0){set_result(r,PROSPEROMGR_HTTP_ERR_WRITE,t.status,errno,10);rc=-1;break;}close(t.fd);t.fd=-1;set_result(r,PROSPEROMGR_HTTP_OK,t.status,0,7);if(r){r->bytes=t.written;r->total_ms=std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-download_started).count();r->write_ms=metrics.write_us.load()/1000;}rc=0;break;
     }
-    if(t.fd>=0)close(t.fd);if(rc!=0)unlink(path);return rc;
+    if(rc==0&&progress)progress(t.written,t.total,progress_data);
+    const bool owns_path=t.fd>=0;
+    if(t.fd>=0)close(t.fd);if(rc!=0&&owns_path)unlink(path);return rc;
 }

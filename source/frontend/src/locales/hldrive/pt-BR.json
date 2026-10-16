@@ -82,5 +82,11 @@
   "ofTotal": " de {total}",
   "shortcutSuccess": "Atalho registrado.",
   "stopSuccess": "HLDRIVE encerrando.",
-  "removeSuccess": "Remoção concluída. HLDRIVE encerrando."
+  "removeSuccess": "Remoção concluída. HLDRIVE encerrando.",
+  "averageSpeed": "Média: {speed}",
+  "parallelMode": "Download paralelo: {active} conexões ativas · até {max}",
+  "sequentialReason1": "Conexão única: o servidor não confirmou suporte ao download paralelo.",
+  "sequentialReason2": "Conexão única: o servidor não confirmou intervalos de bytes válidos.",
+  "sequentialReason3": "Conexão única: o servidor não forneceu um identificador forte para combinar as partes com segurança.",
+  "sequentialReason4": "Conexão única: arquivo menor que 32 MiB."
 }

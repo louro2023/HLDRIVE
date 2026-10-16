@@ -1,5 +1,13 @@
 # Histórico de alterações
 
+## v1.0.3-rc.1 — 2026-10-16 — pré-release
+
+- Tratamento ampliado das confirmações de download do Drive e cookies anônimos em memória, com avisos no painel.
+- Até 16 conexões, segmentos de 8 MiB, reaproveitamento de conexões e buffers, gravações agrupadas e menor frequência de atualização do progresso.
+- Velocidade recente em Mbps/MiB/s, média, conexões ativas e motivo do fallback sequencial.
+- Adicionados testes de HTTPS local com conferência dos bytes e testes de interface/erros. A compilação passou; o desempenho no PS5 ainda precisa ser medido.
+- Catálogo estável mantido na 1.0.2. Limitações e falha preexistente da suíte offline descritas em `docs/releases/v1.0.3-rc.1.md`.
+
 ## Catálogo do Payload Manager — 2026-10-15
 
 - Publicada fonte personalizada `repository/payloads.json`, com download e checksum do ELF 1.0.2.

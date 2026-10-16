@@ -31,6 +31,14 @@ typedef void (*prosperomgr_ps5_http_progress_fn)(long long loaded, long long tot
 // Return non-zero to abort the transfer cleanly (used for cancellation).
 typedef int (*prosperomgr_ps5_http_cancel_fn)(void *opaque);
 
+// Snapshot for the single active Drive transfer. reason: 0=parallel,
+// 1=probe failed, 2=no exact range support, 3=no strong validator, 4=small file.
+struct hldrive_download_metrics {
+    int connections, max_connections, reason;
+    long long write_calls, written_bytes, write_us;
+};
+void hldrive_http_download_metrics(struct hldrive_download_metrics *out);
+
 struct prosperomgr_http_result {
     int kind;         // prosperomgr_http_error_kind
     long http_status;  // 0 if no response was ever received
@@ -65,7 +73,8 @@ int prosperomgr_ps5_http_range(const char *url, long long start, long long end, 
                                size_t *out_len, struct prosperomgr_http_result *result);
 
 // Streams the response body straight to `out_path` in fixed chunks — never fully in RAM.
-// `progress` (if non-NULL) fires roughly every 80ms plus once at the end; `cancel` is polled the same way.
+// `progress` (if non-NULL) is serialized at roughly 250ms intervals plus completion.
+// `cancel` is also polled by workers during reception and disk flushes; it must be thread-safe.
 int prosperomgr_ps5_http_download(const char *url, const char *out_path, struct prosperomgr_http_result *result,
                                   prosperomgr_ps5_http_progress_fn progress, void *progress_opaque,
                                   prosperomgr_ps5_http_cancel_fn cancel, void *cancel_opaque);

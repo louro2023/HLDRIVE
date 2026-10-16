@@ -48,7 +48,7 @@ export default function App() {
             </div>
           </div>
         </section>
-        <div className="hidden text-xs text-text-dim md:block">HLDRIVE 1.0.2<br/>{t('hldrive.manager')}</div>
+        <div className="hidden text-xs text-text-dim md:block">HLDRIVE 1.0.3-rc.1<br/>{t('hldrive.manager')}</div>
       </div>
     </aside>
     <div className="relative flex min-w-0 flex-1 flex-col">

@@ -14,6 +14,12 @@ Ao baixar, o payload segue redirecionamentos HTTPS apenas entre hosts Google per
 
 O payload não depende de um serviço auxiliar no computador para consultar o Drive.
 
+Arquivos elegíveis usam uma fila de segmentos de 8 MiB com até 16 workers. Cada worker reaproveita seu handle curl e buffer de escrita de 1 MiB, mantendo memória de aplicação limitada a aproximadamente 16 MiB para esses buffers, além de curl/TLS, sockets e stacks. As conexões solicitam janela TCP de 2 MiB; o kernel pode limitar ou recusar esse valor. O progresso é publicado por uma única thread a cada cerca de 250 ms. O painel exibe a taxa recente em Mbps e MiB/s, a média, conexões ativas e o motivo do fallback sequencial. Não há limite de banda configurado no aplicativo.
+
+Intervalos continuam exigindo 206 exato, tamanho total e ETag forte consistente. O código recusa corpo que ultrapasse a região, codificação transformada, mudança de ETag e resposta 200 a uma região. Falhas cancelam os workers e limpam o arquivo parcial criado pelo trabalho; arquivos preexistentes são preservados. A conclusão exige sincronização final. Ver [pesquisa e resultados locais](DOWNLOAD-PERFORMANCE.md).
+
+As confirmações de arquivos grandes são resolvidas antes da gravação: formulários, links `/uc` e URLs JSON são aceitos somente para o ID solicitado e endpoints de download conhecidos. Cookies anônimos do libcurl são mantidos em memória, com sincronização entre threads, durante as etapas de confirmação e download. A transferência informa quando processa um aviso automaticamente. Uma confirmação repetida ou uma página não reconhecida encerra o trabalho sem concluir um arquivo; mensagens de cota retornadas pelo Google são exibidas no painel.
+
 ## Interface e recursos
 
 `source/frontend` contém React/Vite, navegação por foco e suporte a gamepad padrão. `source/tools/gen_assets.py` comprime os arquivos compilados e gera os recursos incorporados ao backend. As imagens originais ficam em `assets/branding`; as variantes usadas pela interface e pelo atalho são incorporadas ao ELF.

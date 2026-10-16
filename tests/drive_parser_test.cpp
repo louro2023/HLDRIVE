@@ -27,6 +27,17 @@ int main(int argc,char **argv) {
     assert(DownloadConfirmation(form,"test").find("uuid=a%26b")!=std::string::npos);
     assert(DownloadConfirmation(form,"other").empty());
     assert(DownloadConfirmation("<form id='download-form' action='https://evil.test/'></form>","test").empty());
+    assert(!DownloadConfirmation("<form id='download-form' action='https://drive.usercontent.google.com/download?export=download&amp;id=test'><input type='hidden' name='confirm' value='t'></form>","test").empty());
+    auto legacy=DownloadConfirmation("<a href='/uc?export=download&amp;confirm=token&amp;id=test'>Download anyway</a>","test");
+    assert(legacy.find("confirm=token")!=std::string::npos);
+    assert(DownloadConfirmation("<a href='/uc?confirm=t&amp;id=other'>Download</a>","test").empty());
+    assert(DownloadConfirmation("<a href='https://evil.test/uc?confirm=t&amp;id=test'>Download</a>","test").empty());
+    assert(DownloadConfirmation("<a href='https://drive.google.com/drive/folders/test?confirm=t&amp;id=test'>Download</a>","test").empty());
+    auto json=DownloadConfirmation(R"({"downloadUrl":"https:\/\/drive.usercontent.google.com\/download?id\u003dtest\u0026confirm\u003dt"})","test");
+    assert(!json.empty());
+    assert(DownloadConfirmation(std::string(256*1024+1,'x')+form,"test").empty());
+    assert(DownloadConfirmation("<form id='download-form' method='POST' action='https://drive.usercontent.google.com/download'><input type='hidden' name='id' value='test'><input type='hidden' name='confirm' value='t'></form>","test").empty());
+    assert(DownloadPageError("<p class='uc-error-subcaption'>Too many users have <b>downloaded</b> this file &amp; quota exceeded.</p>")=="Too many users have downloaded this file & quota exceeded.");
     std::cout<<"Parser and validation tests passed\n";
     for(int i=1;i<argc;++i) {
         std::ifstream input(argv[i]);std::string body((std::istreambuf_iterator<char>(input)),{});

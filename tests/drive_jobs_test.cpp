@@ -10,6 +10,7 @@ std::vector<std::function<void()>> scheduled;
 int mode=0;
 bool tree=false;
 bool file_lock=false;
+int probes=0, downloads=0;
 const std::string listing="<title>Tests</title><div class='flip-entries'><a href='https://drive.google.com/file/d/file1/view'>test.pkg</a></div>";
 }
 namespace prospero {
@@ -24,6 +25,7 @@ bool IsKernelUnsafePath(const std::string &p){return p=="/dev"||p=="/proc"||p=="
 bool CheckFreeSpaceAtDirectory(const std::string &,uint64_t,uint64_t *,std::string *e){if(mode==3){*e="no space";return false;}return true;}
 }
 extern "C" {
+void hldrive_http_download_metrics(hldrive_download_metrics *out){*out={1,1,4,1,7,10};}
 int prosperomgr_ps5_http_get(const char *url,char **body,size_t *len,size_t,const char *,const char *,prosperomgr_http_result *r){
  std::string html=listing;
  if(tree) {
@@ -32,10 +34,19 @@ int prosperomgr_ps5_http_get(const char *url,char **body,size_t *len,size_t,cons
  }
  r->http_status=200;*len=html.size();*body=(char*)malloc(*len);memcpy(*body,html.data(),*len);return 0;
 }
-int hldrive_http_probe(const char *,char **body,size_t *len,prosperomgr_http_result *r){
+int hldrive_http_probe(const char *url,char **body,size_t *len,prosperomgr_http_result *r){
+ ++probes;
+ if(mode>=4) {
+   std::string page;
+   if(mode==5)page="<p class='uc-error-subcaption'>Download quota exceeded.</p>";
+   else if(mode==6)page="<html>Unrecognized Google notification</html>";
+   else if(mode==7 || std::string(url).find("confirm=")==std::string::npos)page="<a href='/uc?export=download&amp;id=file1&amp;confirm=t'>Download anyway</a>";
+   if(!page.empty()){*len=page.size();*body=(char*)malloc(*len);memcpy(*body,page.data(),*len);r->http_status=200;return 0;}
+ }
  *body=nullptr;*len=0;r->http_status=mode==2?403:200;return mode==2?-1:0;
 }
 int prosperomgr_ps5_http_download(const char *,const char *path,prosperomgr_http_result *r,prosperomgr_ps5_http_progress_fn progress,void *opaque,prosperomgr_ps5_http_cancel_fn cancel,void *cancel_opaque){
+ ++downloads;
  progress(0,7,opaque);if(cancel(cancel_opaque))return -1;
  std::ofstream f(path);f<<"payload";f.close();r->http_status=200;
  if(mode==1){r->kind=PROSPEROMGR_HTTP_ERR_READ;return -1;}
@@ -61,6 +72,10 @@ int main(){
  mode=1;submit();assert(jobs.back()->state=="error");assert(fs::is_empty(dest));
  mode=2;submit();assert(jobs.back()->state=="error");assert(fs::is_empty(dest));
  mode=3;submit();assert(jobs.back()->state=="error");assert(fs::is_empty(dest));
+ mode=4;probes=downloads=0;submit();assert(jobs.back()->state=="done");assert(probes==2&&downloads==1);assert(!jobs.back()->notice.empty());fs::remove(dest+"/test.pkg");
+ mode=5;downloads=0;submit();assert(jobs.back()->state=="error");assert(jobs.back()->error.find("quota exceeded")!=std::string::npos);assert(downloads==0&&fs::is_empty(dest));
+ mode=6;submit();assert(jobs.back()->state=="error");assert(downloads==0&&fs::is_empty(dest));
+ mode=7;probes=0;submit();assert(jobs.back()->state=="error");assert(probes==2&&downloads==0&&fs::is_empty(dest));
  mode=0;assert(Call("POST /api/drive/copy",body(dest+"/../")).status==400);
  fs::create_directory_symlink("/tmp",dest+"/link");assert(Call("POST /api/drive/copy",body(dest+"/link")).status==400);fs::remove(dest+"/link");
  assert(Call("POST /api/drive/copy",body(dest)).status==202);

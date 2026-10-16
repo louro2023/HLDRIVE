@@ -21,6 +21,9 @@ function eta(job, t) {
   const seconds=Math.max(0,Math.ceil((job.total-job.loaded)/job.speed))
   return seconds>=3600?t('hldrive.remaining',{time:`${Math.floor(seconds/3600)}h ${Math.ceil((seconds%3600)/60)}min`}):seconds>=60?t('hldrive.remaining',{time:`${Math.ceil(seconds/60)}min`}):t('hldrive.remaining',{time:`${seconds}s`})
 }
+function speedLabel(bytes, t) {
+  return `${(bytes*8/1000000).toFixed(1)} Mbps (${size(bytes,t)}/s)`
+}
 export default function DriveView({connection,onOpenFiles}) {
   const { t, locale } = useI18n()
   const request = (path, body) => driveRequest(path, body, t)
@@ -110,8 +113,11 @@ export default function DriveView({connection,onOpenFiles}) {
       <div className="space-y-3 pt-4">{[...jobs].reverse().map(job=><article key={job.id} className="rounded-xl border border-panel-border bg-panel-2 p-4">
         <div className="flex justify-between gap-3"><strong className="break-all text-sm">{job.name}</strong><span className="shrink-0 text-xs text-text-dim">{states[job.state]||job.state}</span></div>
         <p className="mt-1 break-all text-xs text-text-dim">{job.current||job.destination}</p>
-        {job.state==='running'&&<><progress aria-label={t('hldrive.progress',{name:job.name})} className="mt-3 h-2 w-full" max={job.total>0?job.total:undefined} value={job.total>0?job.loaded:undefined}/><p className="mt-1 text-xs text-text-dim">{size(job.loaded,t)}{job.total>0?t('hldrive.ofTotal',{total:size(job.total,t)}):''}{job.speed>0?` · ${size(job.speed,t)}/s · ${eta(job,t)}`:''}</p></>}
+        {job.state==='running'&&<><progress aria-label={t('hldrive.progress',{name:job.name})} className="mt-3 h-2 w-full" max={job.total>0?job.total:undefined} value={job.total>0?job.loaded:undefined}/><p className="mt-1 text-xs text-text-dim">{size(job.loaded,t)}{job.total>0?t('hldrive.ofTotal',{total:size(job.total,t)}):''}{job.speed>0?` · ${speedLabel(job.speed,t)} · ${eta(job,t)}`:''}</p></>}
         <p className="mt-2 text-xs text-text-dim">{t('hldrive.totals',{files:job.files||0,skipped:job.skipped||0})}</p>
+        {job.average_speed>0&&<p className="mt-1 text-xs text-text-dim">{t('hldrive.averageSpeed',{speed:speedLabel(job.average_speed,t)})}</p>}
+        {job.transport_reason>=0&&<p className="mt-1 text-xs text-text-dim">{job.transport_reason===0?t('hldrive.parallelMode',{active:job.connections||0,max:job.max_connections||0}):t(`hldrive.sequentialReason${job.transport_reason}`)}</p>}
+        {job.notice&&<p role="status" className="mt-2 text-sm text-warn">{job.notice}</p>}
         {job.error&&<p role="alert" className="mt-2 text-sm text-err">{job.error}</p>}
         {(job.state==='running'||job.state==='queued')&&<button className={`${button} mt-3`} onClick={()=>request('cancel',{id:job.id}).catch(e=>setError(e.message))}>{t('hldrive.cancel')}</button>}
       </article>)}</div>

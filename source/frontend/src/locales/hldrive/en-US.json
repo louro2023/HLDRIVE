@@ -82,5 +82,11 @@
   "ofTotal": " of {total}",
   "shortcutSuccess": "Shortcut registered.",
   "stopSuccess": "HLDRIVE is stopping.",
-  "removeSuccess": "Removal completed. HLDRIVE is stopping."
+  "removeSuccess": "Removal completed. HLDRIVE is stopping.",
+  "averageSpeed": "Average: {speed}",
+  "parallelMode": "Parallel download: {active} active connections · up to {max}",
+  "sequentialReason1": "Single connection: the server did not confirm parallel download support.",
+  "sequentialReason2": "Single connection: the server did not confirm valid byte ranges.",
+  "sequentialReason3": "Single connection: the server did not provide a strong validator to safely combine parts.",
+  "sequentialReason4": "Single connection: file smaller than 32 MiB."
 }

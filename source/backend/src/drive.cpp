@@ -26,8 +26,9 @@ namespace {
 using namespace hldrive;
 namespace fs=std::filesystem;
 struct Job {
-    std::string id, name, destination, current, state="queued", error, conflict="skip";
-    long long loaded=0, total=-1, completed_files=0, skipped_files=0, speed=0;
+    std::string id, name, destination, current, state="queued", error, notice, conflict="skip";
+    long long loaded=0, total=-1, completed_files=0, skipped_files=0, speed=0, average_speed=0;
+    int connections=0, max_connections=0, transport_reason=-1;
     std::atomic<bool> cancel{false};
 };
 std::mutex jobs_mu, network_mu;
@@ -124,7 +125,8 @@ void Download(const DriveEntry &entry,const std::string &destination,const std::
     std::string url="https://drive.usercontent.google.com/download?id="+entry.ref.id+"&export=download";
     if(!entry.ref.resource_key.empty()) url+="&resourcekey="+Encode(entry.ref.resource_key);
     std::lock_guard<std::mutex> net(network_mu);
-    for(int attempt=0;attempt<3;++attempt) {
+    std::set<std::string> confirmations;
+    for(int attempt=0;attempt<6;++attempt) {
         CheckCancel(job);
         char *raw=nullptr;size_t length=0;prosperomgr_http_result result{};
         int rc=hldrive_http_probe(url.c_str(),&raw,&length,&result);
@@ -132,12 +134,20 @@ void Download(const DriveEntry &entry,const std::string &destination,const std::
         if(rc!=0) throw std::runtime_error(NetworkError(result));
         if(!raw) break;
         auto next=DownloadConfirmation(std::string(raw,length),entry.ref.id);
-        if(next.empty()||next==url||attempt==2) throw std::runtime_error("Google exige login, bloqueou o download ou mudou a confirmação. Confira o link no navegador.");
+        if(next.empty()) {
+            auto message=DownloadPageError(std::string(raw,length));
+            throw std::runtime_error(message.empty()?"O Google retornou um aviso de download não reconhecido. Nenhum arquivo foi salvo; confira o link público no navegador e tente novamente.":"Aviso do Google Drive: "+message);
+        }
+        if(!entry.ref.resource_key.empty() && next.find("resourcekey=")==std::string::npos) next+="resourcekey="+Encode(entry.ref.resource_key)+"&";
+        if(!confirmations.insert(next).second || attempt==5) throw std::runtime_error("O Google repetiu a confirmação e não liberou o arquivo. Tente novamente mais tarde. Nenhum arquivo foi concluído.");
+        {std::lock_guard<std::mutex> lock(jobs_mu);job->notice="Confirmação de download do Google Drive processada automaticamente (aviso de arquivo grande/sem verificação de vírus).";}
+        LogEvent("Drive: confirmação de download processada para "+entry.name);
         url=next;
     }
-    {std::lock_guard<std::mutex> lock(jobs_mu);job->current=target;job->loaded=0;job->total=-1;job->speed=0;}
+    {std::lock_guard<std::mutex> lock(jobs_mu);job->current=target;job->loaded=0;job->total=-1;job->speed=0;job->average_speed=0;job->transport_reason=-1;job->connections=0;job->max_connections=0;}
     struct Context {std::shared_ptr<Job> job;std::string destination;std::string error;bool checked=false;
-        std::chrono::steady_clock::time_point started=std::chrono::steady_clock::now();};
+        std::chrono::steady_clock::time_point started=std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point sampled=started;long long sample_bytes=0;};
     Context ctx{job,destination,"",false};
     auto progress=[](long long loaded,long long total,void *opaque) {
         auto &c=*static_cast<Context*>(opaque);
@@ -145,13 +155,21 @@ void Download(const DriveEntry &entry,const std::string &destination,const std::
             c.checked=true;uint64_t available=0;
             if(!CheckFreeSpaceAtDirectory(c.destination,static_cast<uint64_t>(std::max(0LL,total-loaded)),&available,&c.error)) c.job->cancel=true;
         }
+        hldrive_download_metrics metrics{};hldrive_http_download_metrics(&metrics);
         std::lock_guard<std::mutex> lock(jobs_mu);c.job->loaded=loaded;c.job->total=total;
+        c.job->connections=metrics.connections;c.job->max_connections=metrics.max_connections;c.job->transport_reason=metrics.reason;
         auto elapsed=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-c.started).count();
-        c.job->speed=elapsed>=500?static_cast<long long>(static_cast<double>(loaded)*1000.0/elapsed):0;
+        c.job->average_speed=elapsed>=500?static_cast<long long>(static_cast<double>(loaded)*1000.0/elapsed):0;
+        auto now=std::chrono::steady_clock::now();
+        auto window=std::chrono::duration_cast<std::chrono::milliseconds>(now-c.sampled).count();
+        if(window>=1000){c.job->speed=static_cast<long long>(static_cast<double>(std::max(0LL,loaded-c.sample_bytes))*1000.0/window);c.sampled=now;c.sample_bytes=loaded;}
     };
     auto canceled=[](void *opaque)->int {return static_cast<Context*>(opaque)->job->cancel?1:0;};
     prosperomgr_http_result result{};
     int rc=prosperomgr_ps5_http_download(url.c_str(),temp.c_str(),&result,progress,&ctx,canceled,&ctx);
+    hldrive_download_metrics metrics{};hldrive_http_download_metrics(&metrics);
+    {std::lock_guard<std::mutex> lock(jobs_mu);job->connections=0;job->max_connections=metrics.max_connections;job->transport_reason=metrics.reason;}
+    LogEvent("Drive desempenho: conexoes="+std::to_string(metrics.max_connections)+" motivo="+std::to_string(metrics.reason)+" bytes="+std::to_string(result.bytes)+" tempo_ms="+std::to_string(result.total_ms)+" gravacoes="+std::to_string(metrics.write_calls)+" escrita_us="+std::to_string(metrics.write_us));
     if(!ctx.error.empty()) {job->cancel=false;throw std::runtime_error(ctx.error);}
     CheckCancel(job);
     if(rc!=0) throw std::runtime_error(NetworkError(result));
@@ -243,7 +261,7 @@ void RegisterDriveRoutes(HttpServer *server,const Config &cfg) {
     });
     server->Route("GET","/api/drive/jobs",[](const HttpRequest &) {
         std::lock_guard<std::mutex> lock(jobs_mu);std::vector<std::string> list;
-        for(const auto &j:jobs) list.push_back(JsonWriter().Str("id",j->id).Str("name",j->name).Str("state",j->state).Str("destination",j->destination).Str("current",j->current).Str("error",j->error).Str("conflict",j->conflict).Int("loaded",j->loaded).Int("total",j->total).Int("files",j->completed_files).Int("skipped",j->skipped_files).Int("speed",j->speed).Done());
+        for(const auto &j:jobs) list.push_back(JsonWriter().Str("id",j->id).Str("name",j->name).Str("state",j->state).Str("destination",j->destination).Str("current",j->current).Str("error",j->error).Str("notice",j->notice).Str("conflict",j->conflict).Int("loaded",j->loaded).Int("total",j->total).Int("files",j->completed_files).Int("skipped",j->skipped_files).Int("speed",j->speed).Int("average_speed",j->average_speed).Int("connections",j->connections).Int("max_connections",j->max_connections).Int("transport_reason",j->transport_reason).Done());
         return HttpResponse::Json(JsonWriter().Raw("jobs",JsonWriter::Array(list)).Done());
     });
     server->Route("POST","/api/drive/cancel",[](const HttpRequest &req) {

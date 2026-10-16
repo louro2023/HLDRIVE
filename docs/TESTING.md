@@ -1,5 +1,28 @@
 # Testes e validação
 
+## Transporte segmentado e velocidade
+
+Compile e execute o ensaio de HTTPS local no ambiente Linux com libcurl de desenvolvimento e CLI OpenSSL:
+
+```sh
+g++ -O2 -std=c++20 -Isource/backend/include tests/drive_transport_test.cpp -lcurl -pthread -o build/drive_transport_test
+python3 tools/test-drive-transport.py
+```
+
+O ensaio utiliza o transporte de produção sem desabilitar TLS ou a allowlist, através de um adaptador de teste para conectar o hostname Google à fixture local com certificado de teste. Verifica todos os bytes recebidos, serialização/monotonicidade do progresso, agrupamento de gravações, fallback sequencial, intervalos inválidos, mudança de identidade, truncamento, HTML e cancelamento. A fixture não acessa o Google nem o console. Resultados ficam em `build/drive-transport-results.json`; os dois últimos casos comparam oito e 16 workers sob um limite artificial por conexão, sem representar velocidade real no PS5.
+
+O teste `node tools/ui-test/drive-download.cjs` verifica também a conversão de 62.500.000 bytes/s para 500,0 Mbps/59,6 MiB/s, média, conexões ativas e explicação do fallback, além de conclusão/erro e layout móvel. As traduções novas estão em pt-BR, en-US e es-AR.
+
+## Confirmações de download do Google Drive
+
+O download reconhece formulários com parâmetros na action e nos campos ocultos, links antigos `/uc` e `downloadUrl` em JSON. As confirmações são limitadas ao mesmo ID de arquivo e aos endpoints HTTPS de download do Google. A chave de recurso é preservada. Avisos reconhecidos são processados automaticamente e indicados na transferência; não é necessário login para pastas públicas.
+
+Cookies anônimos ficam somente em memória e são compartilhados, com locks, entre consulta, redirecionamentos e conexões de download. O teste `tests/drive_cookies_test.cpp` usa libcurl real sem rede e verifica a preservação após fechar a consulta e abrir oito handles em paralelo. Para a suíte offline, instale os headers e a biblioteca de desenvolvimento do libcurl no ambiente Linux (`curl-dev` no Alpine).
+
+Os testes de parser e fila simulam confirmação seguida de arquivo, confirmação repetida, página desconhecida e cota excedida. Páginas de erro não são salvas como arquivos. `node tools/ui-test/drive-download.cjs` verifica aviso, conclusão, erro e layout móvel com APIs simuladas e tráfego externo bloqueado. O texto de erro fornecido pelo Google é exibido como texto, sem executar HTML.
+
+Validação local: parser, fila, cookies, transporte sintético, interface de download, build do frontend e traduções passaram. A suíte offline completa encontra uma falha preexistente em `tests/lifecycle_test.cpp`: referência a `RemoveSettingsAt`, que não existe no código atual. Esse teste não foi alterado por esta correção. Os testes simulados não comprovam downloads reais de arquivos grandes no PS5; essa verificação ainda deve ser feita no console.
+
 ## Idiomas — versão 1.0.2
 
 `node tools/ui-test/languages.cjs` inicia um servidor de teste local e simula as APIs. Verifica as três opções com bandeiras, troca imediata, preservação dos arquivos selecionados, tradução do destino e do aviso de exclusão, arquivos locais, persistência após recarregar, foco por teclado/gamepad e layout móvel. Bloqueia tráfego externo e não inicia downloads nem ações de manutenção.

@@ -8,6 +8,7 @@ struct DriveListing { std::string name; std::vector<DriveEntry> entries; };
 bool ParseDriveFolder(const std::string &, DriveRef *);
 bool ParseDriveListing(const std::string &, DriveListing *, std::string *error);
 std::string DownloadConfirmation(const std::string &, const std::string &expected_id);
+std::string DownloadPageError(const std::string &);
 std::string Encode(const std::string &);
 bool SafeName(const std::string &);
 bool SafeGoogleUrl(const std::string &);

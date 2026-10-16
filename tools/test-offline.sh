@@ -11,6 +11,8 @@ g++ -std=c++20 -Wall -Wextra -Wno-missing-field-initializers -Isource/backend/in
   tests/drive_jobs_test.cpp source/backend/src/drive_parser.cpp source/backend/src/json_writer.cpp \
   -pthread -o build/drive_jobs_test
 ./build/drive_jobs_test
+g++ -std=c++20 -Isource/backend/include tests/drive_cookies_test.cpp -lcurl -pthread -o build/drive_cookies_test
+./build/drive_cookies_test
 gcc -std=gnu11 -Wno-unused-function -Isource/backend/include tests/http_bridge_test.c -o build/http_bridge_test
 ./build/http_bridge_test
 g++ -std=c++20 -Isource/backend/include -Ibuild/test-include tests/lifecycle_test.cpp source/backend/src/json_writer.cpp -pthread -o build/lifecycle_test

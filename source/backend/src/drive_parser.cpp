@@ -129,25 +129,93 @@ bool ParseDriveListing(const std::string &html, DriveListing *out, std::string *
     return true;
 }
 std::string DownloadConfirmation(const std::string &html, const std::string &expected_id) {
+    if(html.size()>256*1024 || !Id(expected_id)) return {};
+    auto unquote=[](const std::string &s) {
+        std::string out;
+        for(size_t i=0;i<s.size();++i) {
+            if(s[i]=='%' && i+2<s.size() && std::isxdigit((unsigned char)s[i+1]) && std::isxdigit((unsigned char)s[i+2])) {
+                out+=char(std::stoul(s.substr(i+1,2),nullptr,16));i+=2;
+            } else out+=s[i]=='+'?' ':s[i];
+        }
+        return out;
+    };
+    auto query=[&](const std::string &url) {
+        std::map<std::string,std::string> params;
+        auto p=url.find('?');
+        if(p==std::string::npos) return params;
+        for(++p;p<url.size();) {
+            auto end=url.find('&',p);if(end==std::string::npos)end=url.size();
+            auto eq=url.find('=',p);
+            if(eq<end) params[unquote(url.substr(p,eq-p))]=unquote(url.substr(eq+1,end-eq-1));
+            p=end+1;
+        }
+        return params;
+    };
+    auto endpoint=[](std::string url) {
+        if(url.rfind("/uc?",0)==0) url="https://drive.google.com"+url;
+        auto path=url.substr(0,url.find('?'));
+        if(path!="https://drive.usercontent.google.com/download" && path!="https://drive.google.com/uc" && path!="https://docs.google.com/uc") return std::string();
+        return url;
+    };
+    auto build=[&](std::string action,const std::map<std::string,std::string> &params) {
+        action=endpoint(action);
+        auto id=params.find("id"), confirm=params.find("confirm");
+        if(action.empty() || id==params.end() || id->second!=expected_id || confirm==params.end() || confirm->second.empty()) return std::string();
+        action=action.substr(0,action.find('?'))+"?";
+        for(const auto &[key,value]:params) {
+            if(key.empty()||key.size()>100||value.size()>2048) return std::string();
+            action+=Encode(key)+"="+Encode(value)+"&";
+        }
+        return SafeGoogleUrl(action)?action:std::string();
+    };
     size_t pos=0;
     while((pos=html.find("<form",pos))!=std::string::npos) {
         auto end=html.find('>',pos); if(end==std::string::npos) break;
         auto attrs=Attrs(html.substr(pos,end-pos+1));pos=end+1;
         if(attrs["id"]!="download-form") continue;
         auto action=attrs["action"];
-        if(action!="https://drive.usercontent.google.com/download") return {};
+        if(endpoint(action).empty() || (!attrs["method"].empty() && attrs["method"]!="get" && attrs["method"]!="GET")) continue;
         auto close=html.find("</form>",pos);if(close==std::string::npos)return {};
-        std::map<std::string,std::string> params;
+        auto params=query(action);
         while((pos=html.find("<input",pos))!=std::string::npos && pos<close) {
             end=html.find('>',pos);if(end==std::string::npos||end>close)return {};
             auto input=Attrs(html.substr(pos,end-pos+1));pos=end+1;
             if(input["type"]=="hidden") params[input["name"]]=input["value"];
         }
-        if(params["id"]!=expected_id || params["confirm"].empty()) return {};
-        action+='?';
-        for(const auto &[key,value]:params) {if(key.size()>100||value.size()>2048)return {};action+=Encode(key)+"="+Encode(value)+"&";}
-        return SafeGoogleUrl(action)?action:std::string();
+        auto next=build(action,params);if(!next.empty())return next;
+    }
+    // Older Drive pages use a confirmation anchor instead of download-form.
+    pos=0;
+    while((pos=html.find("<a ",pos))!=std::string::npos) {
+        auto end=html.find('>',pos);if(end==std::string::npos)break;
+        auto url=Attrs(html.substr(pos,end-pos+1))["href"];pos=end+1;
+        auto next=build(url,query(url));if(!next.empty())return next;
+    }
+    // Some variants embed the same download URL in JSON, without a form.
+    auto marker=html.find("\"downloadUrl\"");
+    if(marker!=std::string::npos) {
+        auto colon=html.find(':',marker+13), start=html.find_first_not_of(" \t\r\n",colon==std::string::npos?html.size():colon+1);
+        if(start!=std::string::npos && html[start]=='"') {
+            auto end=html.find('"',start+1);
+            if(end!=std::string::npos) {
+                auto url=html.substr(start+1,end-start-1);
+                for(const auto &[from,to]:std::map<std::string,std::string>{{"\\u003d","="},{"\\u003D","="},{"\\u0026","&"},{"\\/","/"}}) {
+                    size_t p=0;while((p=url.find(from,p))!=std::string::npos){url.replace(p,from.size(),to);p+=to.size();}
+                }
+                auto next=build(Decode(url),query(Decode(url)));if(!next.empty())return next;
+            }
+        }
     }
     return {};
+}
+std::string DownloadPageError(const std::string &html) {
+    if(html.size()>256*1024)return {};
+    auto pos=html.find("uc-error-subcaption");
+    if(pos==std::string::npos) return {};
+    auto start=html.find('>',pos), end=html.find("</p>",start);
+    if(start==std::string::npos||end==std::string::npos)return {};
+    auto message=Text(html.substr(start+1,end-start-1));
+    message.erase(std::remove_if(message.begin(),message.end(),[](unsigned char c){return c<32||c==127;}),message.end());
+    return message.substr(0,600);
 }
 }
