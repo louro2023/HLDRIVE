@@ -63,7 +63,7 @@ int prosperomgr_ps5_http_get(const char *url, char **out_body, size_t *out_len, 
                              struct prosperomgr_http_result *result);
 
 // Content-Length of `url` without reading the body. Fails when the server sends no
-// length, which also means it can't be read in ranges.
+// length; a separate range probe can still discover the size via Content-Range.
 int prosperomgr_ps5_http_size(const char *url, long long *out_size,
                               struct prosperomgr_http_result *result);
 

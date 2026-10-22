@@ -69,7 +69,7 @@ struct ParallelProgress {
 struct Transfer {
     std::string location;
     std::string content_disposition;
-    std::string etag;
+    std::string etag, modified, response_date;
     std::string content_encoding;
     long status=0;
     long long content_length=-1;
@@ -82,7 +82,7 @@ struct Transfer {
     int fd=-1;
     bool save_file=false, probe=false, head=false, attachment=false, overflow=false, write_error=false, canceled=false;
     bool range_probe=false, range_mode=false, range_valid=false, range_invalid=false;
-    std::string expected_etag;
+    std::string expected_etag, expected_modified;
     int write_errno=0;
     long long written=0, total=-1;
     prosperomgr_ps5_http_progress_fn progress=nullptr;
@@ -119,15 +119,23 @@ std::string resolve_location(const std::string &base,const std::string &loc){
 }
 size_t header_cb(char *data,size_t size,size_t count,void *opaque){
     auto &t=*static_cast<Transfer*>(opaque); size_t n=size*count;
-    if(n>=5&&!std::memcmp(data,"HTTP/",5)){t.location.clear();t.content_disposition.clear();t.etag.clear();t.content_encoding.clear();t.body.clear();t.attachment=false;t.content_length=-1;t.response_range_start=t.response_range_end=t.response_range_total=-1;t.range_valid=false;t.status=0;std::sscanf(data,"HTTP/%*s %ld",&t.status);}
+    if(n>=5&&!std::memcmp(data,"HTTP/",5)){t.location.clear();t.content_disposition.clear();t.etag.clear();t.modified.clear();t.response_date.clear();t.content_encoding.clear();t.body.clear();t.attachment=false;t.content_length=-1;t.response_range_start=t.response_range_end=t.response_range_total=-1;t.range_valid=false;t.status=0;std::sscanf(data,"HTTP/%*s %ld",&t.status);}
     if(n>=17&&!strncasecmp(data,"Content-Encoding:",17)){size_t p=17;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&std::isspace((unsigned char)data[e-1]))--e;t.content_encoding=lower(std::string(data+p,e-p));}
     if(n>=9&&!strncasecmp(data,"Location:",9)){size_t p=9;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;t.location.assign(data+p,e-p);}
     if(n>=20&&!strncasecmp(data,"Content-Disposition:",20)){size_t p=20;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;t.content_disposition.assign(data+p,e-p);t.attachment=lower(t.content_disposition).find("attachment")!=std::string::npos;}
+    for(const auto &field:{std::pair<const char*,std::string*>{"Last-Modified:",&t.modified},{"Date:",&t.response_date}}){
+        size_t prefix=std::strlen(field.first);
+        if(n>=prefix&&!strncasecmp(data,field.first,prefix)){
+            size_t p=prefix,e=n;while(p<e&&std::isspace((unsigned char)data[p]))++p;
+            while(e>p&&std::isspace((unsigned char)data[e-1]))--e;
+            field.second->assign(data+p,e-p);
+        }
+    }
     if(n>=5&&!strncasecmp(data,"ETag:",5)){size_t p=5;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;t.etag.assign(data+p,e-p);}
     if(n>=14&&!strncasecmp(data,"Content-Range:",14)){char value[128]{};size_t p=14;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;size_t len=std::min(e-p,sizeof(value)-1);std::memcpy(value,data+p,len);long long first=-1,last=-1,total=-1;if(std::sscanf(value,"bytes %lld-%lld/%lld",&first,&last,&total)==3){t.response_range_start=first;t.response_range_end=last;t.response_range_total=total;}}
     if(n>=15&&!strncasecmp(data,"Content-Length:",15)){char value[40]{};size_t p=15;while(p<n&&std::isspace((unsigned char)data[p]))++p;size_t e=n;while(e>p&&(data[e-1]=='\r'||data[e-1]=='\n'))--e;size_t l=std::min(e-p,sizeof(value)-1);std::memcpy(value,data+p,l);char *end=nullptr;long long v=std::strtoll(value,&end,10);if(end!=value&&v>=0)t.content_length=v;}
     if(n==2&&data[0]=='\r'&&data[1]=='\n'){
-        if(t.range_mode){t.range_valid=t.status==206&&t.response_range_start==t.request_range_start&&t.response_range_end==t.request_range_end&&t.response_range_total>0&&(t.request_range_total<0||t.response_range_total==t.request_range_total)&&(t.expected_etag.empty()||t.etag==t.expected_etag)&&(t.content_encoding.empty()||t.content_encoding=="identity");}
+        if(t.range_mode){t.range_valid=t.status==206&&t.response_range_start==t.request_range_start&&t.response_range_end==t.request_range_end&&t.response_range_total>0&&(t.request_range_total<0||t.response_range_total==t.request_range_total)&&(t.expected_etag.empty()||t.etag==t.expected_etag)&&(t.expected_modified.empty()||(t.etag.empty()&&t.modified==t.expected_modified))&&(t.content_encoding.empty()||t.content_encoding=="identity");}
         // Open only after a successful response explicitly identifies a file attachment.
         if(t.save_file&&t.attachment&&t.status>=200&&t.status<300&&t.fd<0&&t.path){t.fd=open(t.path,O_WRONLY|O_CREAT|O_EXCL,0644);if(t.fd<0){t.write_error=true;t.write_errno=errno;}}
     }
@@ -245,9 +253,17 @@ int parallel_cancel(void *opaque){
     return state.abort.load()||(state.cancel&&state.cancel(state.cancel_data));
 }
 bool strong_etag(const std::string &etag){return etag.size()>=2&&etag.rfind("W/",0)!=0&&etag.front()=='"'&&etag.back()=='"';}
+// HTTP date fallback only without any ETag. Keep a conservative 60-second
+// margin between server Date and Last-Modified (RFC 9110 8.8.2.2 / 13.1.5).
+bool strong_modified(const Transfer &t){
+    if(!t.etag.empty()||t.modified.empty()||t.response_date.empty())return false;
+    auto modified=curl_getdate(t.modified.c_str(),nullptr);
+    auto date=curl_getdate(t.response_date.c_str(),nullptr);
+    return modified>=0&&date>=modified&&date-modified>=60;
+}
 int download_parallel(const std::string &url,const std::string &path,long long total,const std::string &etag,
                       prosperomgr_http_result *result,prosperomgr_ps5_http_progress_fn progress,void *progress_data,
-                      prosperomgr_ps5_http_cancel_fn cancel,void *cancel_data,int connection_limit=kParallelDownloadConnections){
+                      prosperomgr_ps5_http_cancel_fn cancel,void *cancel_data,int connection_limit=kParallelDownloadConnections,const std::string &modified={}){
     const auto started=Clock::now();
     if(progress)progress(0,total,progress_data);
     if(cancel&&cancel(cancel_data)){set_result(result,PROSPEROMGR_HTTP_ERR_CANCELED,0,0,10);return -1;}
@@ -271,11 +287,11 @@ int download_parallel(const std::string &url,const std::string &path,long long t
                         const long long start=state.next.fetch_add(kSegmentBytes);
                         if(start>=total)break;
                         const long long end=std::min(total-1,start+kSegmentBytes-1);
-                        Transfer part;part.save_file=true;part.range_mode=true;part.fd=fd;part.request_range_start=start;part.request_range_end=end;part.request_range_total=total;part.expected_etag=etag;
+                        Transfer part;part.save_file=true;part.range_mode=true;part.fd=fd;part.request_range_start=start;part.request_range_end=end;part.request_range_total=total;part.expected_etag=etag;part.expected_modified=modified;
                         part.cancel=parallel_cancel;part.cancel_data=&state;part.aggregate_loaded=&state.loaded;
                         part.disk_buffer.swap(buffer);
                         const std::string range="Range: bytes="+std::to_string(start)+"-"+std::to_string(end);
-                        const std::string if_range="If-Range: "+etag;
+                        const std::string if_range="If-Range: "+(etag.empty()?modified:etag);
                         curl_slist *headers=nullptr;
                         for(const auto &header:{range,if_range}){
                             auto *next=curl_slist_append(headers,header.c_str());
@@ -360,16 +376,16 @@ extern "C" int prosperomgr_ps5_http_download(const char *url,const char *path,pr
     std::string url_now=url?url:"";if(!allowed(url_now)){set_result(r,PROSPEROMGR_HTTP_ERR_INIT,0,0,1);return -1;}
     if(cancel&&cancel(cancel_data)){set_result(r,PROSPEROMGR_HTTP_ERR_CANCELED,0,0,10);return -1;}
     // Public Drive links sometimes support byte ranges on their final signed URL.
-    // Probe first; only use parallel writes when the server proves ranges and a strong ETag.
+    // Probe first; only use parallel writes when the server proves ranges and a strong HTTP validator.
     Transfer probe;probe.probe=true;probe.range_probe=true;probe.range_mode=true;probe.request_range_start=0;probe.request_range_end=0;probe.cancel=cancel;probe.cancel_data=cancel_data;
     prosperomgr_http_result probe_result{};std::string range_url;
     int probe_rc=run(url_now.c_str(),probe,"Range","bytes=0-0",&probe_result,&range_url);
     if(cancel&&cancel(cancel_data)){set_result(r,PROSPEROMGR_HTTP_ERR_CANCELED,probe.status,0,10);return -1;}
-    if(probe_rc==0&&probe.status==206&&probe.range_valid&&probe.attachment&&strong_etag(probe.etag)&&probe.response_range_total>=kParallelDownloadThreshold&&allowed(range_url)){
-        int parallel_rc=download_parallel(range_url,path,probe.response_range_total,probe.etag,r,progress,progress_data,cancel,cancel_data);
+    if(probe_rc==0&&probe.status==206&&probe.range_valid&&probe.attachment&&(strong_etag(probe.etag)||strong_modified(probe))&&probe.response_range_total>=kParallelDownloadThreshold&&allowed(range_url)){
+        int parallel_rc=download_parallel(range_url,path,probe.response_range_total,probe.etag,r,progress,progress_data,cancel,cancel_data,kParallelDownloadConnections,probe.etag.empty()?probe.modified:std::string{});
         return parallel_rc;
     }
-    metrics.reason=probe_rc!=0?1:(!probe.range_valid||!probe.attachment)?2:!strong_etag(probe.etag)?3:4;
+    metrics.reason=probe_rc!=0?1:(!probe.range_valid||!probe.attachment)?2:!(strong_etag(probe.etag)||strong_modified(probe))?3:4;
     metrics.maximum=1;metrics.active=1;
     struct EndActive {~EndActive(){metrics.active=0;}} end_active;
     int rc=-1;

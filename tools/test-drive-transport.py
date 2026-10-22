@@ -54,8 +54,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
             status = 200
         self.send_response(status)
         self.send_header('Content-Disposition', 'attachment; filename="fixture.pkg"')
-        if mode not in ('noetag', 'existingsequential'):
+        if mode not in ('noetag', 'existingsequential') and not mode.startswith('date'):
             self.send_header('ETag', '"changed"' if mode == 'changed' and not probe else '"fixture"')
+        if mode.startswith('date'):
+            value = 'Sat, 01 Jan 2000 10:00:00 GMT'
+            if mode == 'datechanged' and not probe:
+                value = 'Sat, 01 Jan 2000 10:01:00 GMT'
+            if mode == 'dateinvalid':
+                value = 'invalid'
+            if mode == 'daterecent':
+                value = self.date_time_string()
+            self.send_header('Last-Modified', value)
+            if mode == 'dateweak':
+                self.send_header('ETag', 'W/"fixture"')
+            if not probe and mode in ('datevalid', 'datechanged'):
+                assert self.headers.get('If-Range') == 'Sat, 01 Jan 2000 10:00:00 GMT'
         if status == 206:
             self.send_header('Content-Range', f'bytes {start + (1 if mode == "wrongrange" and not probe else 0)}-{end}/{total}')
         if mode == 'encoding' and not probe:
@@ -94,7 +107,7 @@ def main():
         threading.Thread(target=server.serve_forever, daemon=True).start()
         results = []
         try:
-            for mode in ['normal', 'redirect', 'noetag', 'norange', 'small', 'wrongrange', 'changed', 'encoding', 'ignored', 'short', 'html', 'cancel', 'existingparallel', 'existingsequential', 'bench8', 'bench16']:
+            for mode in ['datevalid', 'datechanged', 'dateinvalid', 'daterecent', 'dateweak', 'normal', 'redirect', 'noetag', 'norange', 'small', 'wrongrange', 'changed', 'encoding', 'ignored', 'short', 'html', 'cancel', 'existingparallel', 'existingsequential', 'bench8', 'bench16']:
                 run = subprocess.run([str(ROOT / 'build/drive_transport_test'), mode, str(tmp / 'file.part'), str(server.server_port), str(cert)], check=True, capture_output=True, text=True, timeout=90)
                 result = json.loads(run.stdout)
                 results.append(result)

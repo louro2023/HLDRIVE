@@ -33,6 +33,39 @@ html[data-pmgr-theme="light"] {
 .hldrive-ui { letter-spacing: -.012em; }
 .hldrive-ui .pmgr-bg,
 .hldrive-ui .pmgr-aurora-blob { display: none; }
+.hldrive-ui.pmgr-app { position: relative; }
+.hldrive-ambient {
+  position: absolute;
+  inset: -5%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 20% 20%, rgba(66, 133, 244, .22), transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(52, 168, 83, .15), transparent 50%);
+  animation: hldrive-ambient-drift 24s ease-in-out infinite alternate;
+}
+@keyframes hldrive-ambient-drift {
+  from { transform: translate(-2%, -1%); opacity: .55; }
+  to { transform: translate(2%, 2%); opacity: 1; }
+}
+.hldrive-brand-hero { overflow: hidden; }
+.hldrive-brand-hero::before {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 65% 60%, rgba(66, 133, 244, .32), transparent 45%),
+    radial-gradient(ellipse at 88% 35%, rgba(52, 168, 83, .25), transparent 30%),
+    radial-gradient(ellipse at 45% 90%, rgba(251, 188, 4, .12), transparent 30%);
+  animation: hldrive-hero-glow 16s ease-in-out infinite alternate;
+}
+@keyframes hldrive-hero-glow {
+  from { transform: translateX(-5%) scale(1); opacity: .5; }
+  to { transform: translateX(5%) scale(1.08); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hldrive-ambient, .hldrive-brand-hero::before { animation: none; }
+}
+html.pmgr-low-power .hldrive-ambient,
+html.pmgr-low-power .hldrive-brand-hero::before { animation-duration: 32s; }
 .hldrive-sidebar {
   width: 240px;
   gap: 10px;

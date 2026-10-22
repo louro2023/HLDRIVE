@@ -28,7 +28,7 @@ export default function App() {
   function navigate(id) { setActive(id); window.location.hash = `/${id}` }
   if(stopped)return <div className="hldrive-ui hldrive-stopped grid min-h-screen place-items-center bg-bg p-8 text-text"><div className="pmgr-panel flex max-w-3xl items-center gap-8 rounded-2xl border border-panel-border p-8"><img src="/branding/cover.jpg" alt={t('hldrive.cover')} className="hidden w-44 shrink-0 rounded-xl md:block"/><div><h1 className="text-2xl font-bold text-accent">HLDRIVE</h1><p role="status" className="mt-4">{stopped}</p><p className="mt-4 text-text-dim">{t('hldrive.disconnected')}</p></div></div></div>
   return <div className="hldrive-ui pmgr-app flex h-screen overflow-hidden bg-bg text-text">
-    <div className="pmgr-bg" /><div className="pmgr-aurora-blob" />
+    <div className="hldrive-ambient" aria-hidden="true" />
     <aside className="hldrive-sidebar relative z-10 flex w-20 shrink-0 flex-col gap-4 border-r border-panel-border bg-panel p-3 md:w-56 md:p-5">
       <div className="hldrive-brand my-2 flex justify-center"><img src="/branding/tile.png" alt="HLDRIVE" width="96" height="96" className="h-auto w-full max-w-24 rounded-xl"/></div>
       {[['drive','Google Drive',DownloadIcon],['files',t('hldrive.files'),FolderIcon]].map(([id,label,Icon]) => <button key={id} title={label} onClick={() => navigate(id)} aria-current={active === id ? 'page' : undefined} className={`hldrive-nav-item flex items-center gap-3 rounded-xl p-3 text-left text-sm font-semibold ${active === id ? 'bg-accent text-white' : 'text-text-dim hover:bg-panel-2'}`}><Icon size={20}/><span className="hidden md:inline">{label}</span></button>)}
@@ -48,7 +48,7 @@ export default function App() {
             </div>
           </div>
         </section>
-        <div className="hidden text-xs text-text-dim md:block">HLDRIVE 1.1.0<br/>{t('hldrive.manager')}</div>
+        <div className="hidden text-xs text-text-dim md:block">HLDRIVE 1.1.1-rc.1<br/>{t('hldrive.manager')}</div>
       </div>
     </aside>
     <div className="relative flex min-w-0 flex-1 flex-col">

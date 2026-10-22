@@ -1,5 +1,13 @@
 # Histórico de alterações
 
+## v1.1.1-rc.1 — 2026-10-22 — pré-release
+
+- Fundo e banner animados em azul, verde e dourado, com CSS e suporte a movimento reduzido.
+- Alternativa de validação por Last-Modified para downloads paralelos sem ETag, sob critérios conservadores e conferência de cada segmento.
+- 21 cenários HTTPS sintéticos aprovados. Build do frontend, traduções, testes locais da interface e compilação do ELF concluídos.
+- Velocidade no Google Drive e fluidez no PS5 ainda não comprovadas. Firmware 13.60 possivelmente compatível, mas não testado.
+- [Notas completas](docs/releases/v1.1.1-rc.1.md).
+
 ## v1.1.0 — 2026-10-16 — pré-release
 
 - Modernização visual: superfícies em azul grafite, detalhes em azul/ciano, botões, cartões, navegação lateral, ícones e diálogos consistentes.
