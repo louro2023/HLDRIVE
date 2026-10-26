@@ -5,7 +5,7 @@
 - Links de pastas salvos no navegador, com nome opcional, abertura direta, exclusão e prevenção de duplicatas.
 - Avisos conhecidos do Google Drive traduzidos em português, inglês e espanhol: cota de downloads, permissão, arquivo indisponível, login e bloqueios de segurança.
 - A troca de idioma atualiza também erros e avisos de transferências já exibidos. Avisos desconhecidos recebem texto genérico traduzido; o original permanece no log.
-- ELF distribuído como `HLDRIVE 1.1.2-rc.1.elf`, com versão atualizada na interface, backend e metadados do atalho.
+- ELF distribuído como `HLDRIVE.1.1.2-rc.1.elf`, com versão atualizada na interface, backend e metadados do atalho.
 - Mantém os recursos experimentais da 1.1.1-rc.1; execução e desempenho no PS5 ainda precisam de validação.
 - [Notas completas](docs/releases/v1.1.2-rc.1.md).
 

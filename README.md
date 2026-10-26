@@ -4,7 +4,7 @@
 
 Gerenciador de arquivos homebrew para PS5, com navegação em pastas públicas do Google Drive e download direto para o console. Interface, imagens e recursos estão incorporados em um único arquivo `HLDRIVE.elf`.
 
-> **Pré-release 1.1.2-rc.1 — links salvos e avisos do Drive traduzidos.** Salve suas pastas favoritas com um nome opcional, abra novamente pela lista e exclua links que não usa mais. Avisos do Google Drive acompanham o idioma selecionado. Mantém o fundo animado e o download experimental da versão anterior; desempenho ainda não confirmado no PS5. [Baixar ELF](https://github.com/louro2023/HLDRIVE/releases/download/v1.1.2-rc.1/HLDRIVE%201.1.2-rc.1.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.1.2-rc.1/HLDRIVE%201.1.2-rc.1.elf.sha256) · [Notas e limitações](docs/releases/v1.1.2-rc.1.md).
+> **Pré-release 1.1.2-rc.1 — links salvos e avisos do Drive traduzidos.** Salve suas pastas favoritas com um nome opcional, abra novamente pela lista e exclua links que não usa mais. Avisos do Google Drive acompanham o idioma selecionado. Mantém o fundo animado e o download experimental da versão anterior; desempenho ainda não confirmado no PS5. [Baixar ELF](https://github.com/louro2023/HLDRIVE/releases/download/v1.1.2-rc.1/HLDRIVE.1.1.2-rc.1.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.1.2-rc.1/HLDRIVE.1.1.2-rc.1.elf.sha256) · [Notas e limitações](docs/releases/v1.1.2-rc.1.md).
 
 **Downloads:** [ELF 1.0.2](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf.sha256) · [Release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.2)
 
@@ -50,7 +50,7 @@ Menus, tela do Drive, transferências, gerenciador de arquivos e diálogos acomp
 - PS5 com ambiente homebrew ativo e um método compatível para iniciar arquivos ELF.
 - Internet e espaço disponível no destino.
 
-1. Baixe o arquivo `.elf` nos anexos da release e inicie-o pelo ambiente homebrew configurado no console. Nesta pré-release ele se chama `HLDRIVE 1.1.2-rc.1.elf`.
+1. Baixe o arquivo `.elf` nos anexos da release e inicie-o pelo ambiente homebrew configurado no console. Nesta pré-release ele se chama `HLDRIVE.1.1.2-rc.1.elf`.
 2. O payload tenta abrir `http://127.0.0.1:8081/?console=1`. Se necessário, acesse `http://IP_DO_PS5:8081` na rede local.
 3. Na aba Google Drive, informe o link público da pasta. O PS5 busca e baixa os arquivos por conta própria.
 
