@@ -1,5 +1,11 @@
 # Testes e validação
 
+## Links salvos e avisos traduzidos
+
+Após compilar o frontend, execute `node tools/ui-test/saved-links.cjs` e `node tools/ui-test/drive-messages.cjs`. Os testes verificam persistência de favoritos, exclusão, abertura, duplicatas, armazenamento indisponível/corrompido, layout móvel e dez cenários de mensagens nos três idiomas. A troca de idioma é verificada com erros de API e de transferências já exibidos. Todas as APIs são simuladas e nenhum arquivo é baixado do Google Drive.
+
+Na 1.1.2-rc.1, avisos conhecidos do Google são traduzidos na interface. Avisos desconhecidos recebem uma mensagem genérica traduzida, com o original preservado no log; diagnósticos técnicos não reconhecidos permanecem como recebidos.
+
 ## Transporte segmentado e velocidade
 
 Compile e execute o ensaio de HTTPS local no ambiente Linux com libcurl de desenvolvimento e CLI OpenSSL:

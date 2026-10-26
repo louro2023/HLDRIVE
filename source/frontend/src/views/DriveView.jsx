@@ -1,4 +1,5 @@
 import { useI18n } from '../lib/i18n.jsx'
+import { driveMessage } from '../lib/driveMessages.js'
 import { useEffect, useRef, useState } from 'react'
 import PathPickerModal from '../components/PathPickerModal.jsx'
 import { FolderIcon, FileIcon, CopyIcon, DownloadIcon } from '../components/icons.jsx'
@@ -16,6 +17,20 @@ function size(bytes, t) {
 }
 
 const button='hldrive-action rounded-lg border border-panel-border bg-panel-2 px-4 py-2 text-sm font-semibold hover:border-accent disabled:opacity-40'
+const savedLinksKey='hldrive_saved_links'
+function folderKey(value) {
+  try {
+    const parsed=new URL(value)
+    if(parsed.protocol!=='https:'||parsed.hostname!=='drive.google.com')return null
+    return parsed.pathname.match(/^\/drive\/(?:u\/\d+\/)?folders\/([\w-]+)\/?$/)?.[1]||null
+  } catch {return null}
+}
+function loadLinks() {
+  try {
+    const links=JSON.parse(localStorage.getItem(savedLinksKey)||'[]')
+    return Array.isArray(links)?links.filter(link=>typeof link?.name==='string'&&typeof link?.url==='string'&&folderKey(link.url)):[]
+  } catch {return []}
+}
 function eta(job, t) {
   if (!(job.speed > 0) || !(job.total > 0)) return ''
   const seconds=Math.max(0,Math.ceil((job.total-job.loaded)/job.speed))
@@ -34,6 +49,19 @@ export default function DriveView({connection,onOpenFiles}) {
   const [picker,setPicker]=useState(null), [search,setSearch]=useState(''), [notice,setNotice]=useState('')
   const [destination,setDestination]=useState('/data'), [pollError,setPollError]=useState('')
   const [conflict,setConflict]=useState('skip')
+  const [savedLinks,setSavedLinks]=useState(loadLinks), [linkName,setLinkName]=useState('')
+  const currentFolder=folderKey(url.trim())
+  const alreadySaved=!!currentFolder&&savedLinks.some(link=>folderKey(link.url)===currentFolder)
+  function updateLinks(next) {
+    try {localStorage.setItem(savedLinksKey,JSON.stringify(next));setSavedLinks(next);setError('');return true}
+    catch {setError(t('hldrive.linksStorageError'));return false}
+  }
+  function saveLink() {
+    if(!currentFolder){setError(t('hldrive.invalidSavedLink'));return}
+    if(alreadySaved)return
+    const name=linkName.trim()||(listing&&folderKey(listing.url)===currentFolder?listing.name:'')||t('hldrive.folder')
+    if(updateLinks([...savedLinks,{name,url:url.trim()}])){setLinkName('');setNotice({key:'linkSaved'})}
+  }
   const generation=useRef(0)
   useEffect(() => {let alive=true;request('config').then(data=>{if(alive)setUrl(data.url||'')}).catch(()=>{});return()=>{alive=false}},[])
   useEffect(() => {
@@ -78,9 +106,23 @@ export default function DriveView({connection,onOpenFiles}) {
         <input aria-label={t('hldrive.folderLink')} type="url" required value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://drive.google.com/drive/folders/…" className="min-w-0 flex-1 rounded-xl border border-panel-border bg-bg px-4 py-3 text-sm outline-none focus:border-accent"/>
         <button className={`${button} bg-accent text-white`} disabled={busy||active||connection!=='online'}>{busy?t('hldrive.opening'):t('hldrive.openFolder')}</button>
       </form>
+      <div className="mt-3 flex flex-wrap gap-3">
+        <input aria-label={t('hldrive.linkName')} value={linkName} maxLength={100} onChange={e=>setLinkName(e.target.value)} placeholder={t('hldrive.linkName')} className="min-w-0 flex-1 rounded-xl border border-panel-border bg-bg px-4 py-2 text-sm outline-none focus:border-accent"/>
+        <button type="button" className={button} disabled={!url.trim()||alreadySaved} onClick={saveLink}>{t(alreadySaved?'hldrive.linkAlreadySaved':'hldrive.saveLink')}</button>
+      </div>
+      <div className="mt-5 border-t border-panel-border pt-4">
+        <h3 className="text-sm font-bold">{t('hldrive.savedLinks')}</h3>
+        <p className="mt-1 text-xs text-text-dim">{t('hldrive.savedLinksHint')}</p>
+        {!savedLinks.length&&<p className="mt-3 text-sm text-text-dim">{t('hldrive.noSavedLinks')}</p>}
+        <ul className="mt-3 space-y-2">{savedLinks.map(link=><li key={folderKey(link.url)} className="flex flex-wrap items-center gap-3 rounded-xl border border-panel-border bg-bg p-3">
+          <div className="min-w-0 flex-1"><p className="break-words text-sm font-semibold">{link.name}</p><p className="mt-1 break-all text-xs text-text-dim">{link.url}</p></div>
+          <button type="button" className={`${button} text-accent`} disabled={busy||active||connection!=='online'} aria-label={t('hldrive.openSavedLink',{name:link.name})} onClick={()=>{setUrl(link.url);browse(link.url,[])}}>{t('hldrive.openFolder')}</button>
+          <button type="button" className={`${button} text-err`} aria-label={t('hldrive.deleteSavedLink',{name:link.name})} onClick={()=>{if(updateLinks(savedLinks.filter(item=>folderKey(item.url)!==folderKey(link.url))))setNotice({key:'linkDeleted'})}}>{t('hldrive.deleteShort')}</button>
+        </li>)}</ul>
+      </div>
       {active&&<p className="mt-3 text-xs text-text-dim">{t('hldrive.busy')}</p>}
     </section>
-    {error&&<div role="alert" className="rounded-xl border border-err/30 bg-err/10 p-4 text-sm text-err">{error}</div>}
+    {error&&<div role="alert" className="rounded-xl border border-err/30 bg-err/10 p-4 text-sm text-err">{driveMessage(error,t)}</div>}
     {notice&&<div role="status" className="rounded-xl bg-accent/10 p-4 text-sm">{t(`hldrive.${notice.key}`,notice.vars)}</div>}
     {listing&&<section className="hldrive-library-panel pmgr-panel overflow-hidden rounded-2xl border border-panel-border">
       <div className="flex flex-wrap items-center gap-2 border-b border-panel-border p-4">
@@ -108,7 +150,7 @@ export default function DriveView({connection,onOpenFiles}) {
       <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold">{t('hldrive.transfers')}</h2><div className="flex flex-wrap gap-2">
         <button className={button} disabled={!jobs.some(j=>!['running','queued'].includes(j.state))} onClick={clearFinished}>{t('hldrive.clear')}</button>
         <button className={button} onClick={onOpenFiles}>{t('hldrive.openFiles')}</button></div></div>
-      {pollError&&<p role="alert" className="mt-3 text-warn">{pollError}</p>}
+      {pollError&&<p role="alert" className="mt-3 text-warn">{driveMessage(pollError,t)}</p>}
       {!jobs.length&&<p className="py-8 text-center text-sm text-text-dim">{t('hldrive.emptyQueue')}</p>}
       <div className="space-y-3 pt-4">{[...jobs].reverse().map(job=><article key={job.id} data-state={job.state} className="hldrive-transfer-card rounded-xl border border-panel-border bg-panel-2 p-4">
         <div className="flex justify-between gap-3"><strong className="break-all text-sm">{job.name}</strong><span className="hldrive-job-state shrink-0 text-xs text-text-dim">{states[job.state]||job.state}</span></div>
@@ -117,8 +159,8 @@ export default function DriveView({connection,onOpenFiles}) {
         <p className="mt-2 text-xs text-text-dim">{t('hldrive.totals',{files:job.files||0,skipped:job.skipped||0})}</p>
         {job.average_speed>0&&<p className="mt-1 text-xs text-text-dim">{t('hldrive.averageSpeed',{speed:speedLabel(job.average_speed,t)})}</p>}
         {job.transport_reason>=0&&<p className="mt-1 text-xs text-text-dim">{job.transport_reason===0?t('hldrive.parallelMode',{active:job.connections||0,max:job.max_connections||0}):t(`hldrive.sequentialReason${job.transport_reason}`)}</p>}
-        {job.notice&&<p role="status" className="mt-2 text-sm text-warn">{job.notice}</p>}
-        {job.error&&<p role="alert" className="mt-2 text-sm text-err">{job.error}</p>}
+        {job.notice&&<p role="status" className="mt-2 text-sm text-warn">{driveMessage(job.notice,t)}</p>}
+        {job.error&&<p role="alert" className="mt-2 text-sm text-err">{driveMessage(job.error,t)}</p>}
         {(job.state==='running'||job.state==='queued')&&<button className={`${button} mt-3`} onClick={()=>request('cancel',{id:job.id}).catch(e=>setError(e.message))}>{t('hldrive.cancel')}</button>}
       </article>)}</div>
       <p className="mt-4 text-xs text-text-dim">{t('hldrive.queueHint')}</p>
