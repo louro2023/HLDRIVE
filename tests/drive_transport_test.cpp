@@ -37,7 +37,7 @@ int main(int argc,char **argv){
     if(existing){std::ofstream file(path);file<<"preserve existing file";}
     if(mode=="bench8"||mode=="bench16"){
         std::call_once(curl_once,init_curl);metrics.reset();
-        rc=download_parallel(url,path,160LL*1024*1024+123,"\"fixture\"",&result,report,&p,nullptr,nullptr,mode=="bench8"?8:16);
+        rc=download_parallel(url,path,400LL*1024*1024+123,"\"fixture\"",&result,report,&p,nullptr,nullptr,mode=="bench8"?8:16);
     }else rc=prosperomgr_ps5_http_download(url.c_str(),path.c_str(),&result,report,&p,mode=="cancel"?cancel:nullptr,&p);
     const auto ms=std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now()-begin).count();
     bool success=mode=="datevalid"||mode=="dateinvalid"||mode=="daterecent"||mode=="dateweak"||mode=="normal"||mode=="noetag"||mode=="norange"||mode=="small"||mode=="bench8"||mode=="bench16"||mode=="redirect";
@@ -47,7 +47,7 @@ int main(int argc,char **argv){
         while(file){file.read((char*)block.data(),block.size());auto n=file.gcount();for(long long i=0;i<n;++i)assert(block[(size_t)i]==(unsigned char)((offset+i)%251));offset+=n;}
         assert(offset==result.bytes);
         assert(metrics.calls.load()<result.bytes/(64*1024)+4); // Coalesced writes, not 16 KiB callbacks.
-        if(mode=="normal"||mode=="redirect"||mode=="datevalid")assert(metrics.maximum==16&&metrics.reason==0);
+        if(mode=="normal"||mode=="redirect"||mode=="datevalid")assert(metrics.maximum==std::min<long long>(kParallelDownloadConnections,(400LL*1024*1024+123+kSegmentBytes-1)/kSegmentBytes)&&metrics.reason==0);
         if(mode=="noetag"||mode=="dateinvalid"||mode=="daterecent"||mode=="dateweak")assert(metrics.reason==3&&metrics.maximum==1);
         if(mode=="norange")assert(metrics.reason==2&&metrics.maximum==1);
         if(mode=="small")assert(metrics.reason==4&&metrics.maximum==1);

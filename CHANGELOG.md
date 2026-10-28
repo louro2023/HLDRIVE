@@ -1,5 +1,10 @@
 # Histórico de alterações
 
+## v1.1.3-rc.1 — 2026-10-28 — pré-release
+
+- Limite experimental triplicado de 16 para 48 conexões por arquivo elegível, mantendo segmentos de 8 MiB. Desempenho no PS5 pendente de teste.
+- Corrigido o registro de 500 Mbps: o usuário esclareceu que essa velocidade nunca foi alcançada.
+
 ## v1.1.2-rc.1 — 2026-10-26 — pré-release
 
 - Links de pastas salvos no navegador, com nome opcional, abertura direta, exclusão e prevenção de duplicatas.
@@ -54,7 +59,7 @@
 - Aumentada a velocidade de download de arquivos grandes com até oito conexões de intervalo para um mesmo arquivo, quando o Google Drive oferece suporte seguro a essa modalidade.
 - Aumentados os buffers de recepção de rede e do libcurl para melhorar transferências em uma única conexão.
 - Mantida uma fila serial para arquivos adicionais; somente as partes do arquivo atual são baixadas em paralelo.
-- O usuário testou a versão no PS5 e relatou velocidade acima de 500 Mb/s. O resultado depende da rede e do servidor.
+- Correção em 28/10/2026: o registro anterior de velocidade acima de 500 Mb/s estava incorreto; o usuário esclareceu que essa velocidade nunca foi alcançada.
 - Corrigida a detecção de versões do arquivo durante o download; quando o servidor não confirma suporte a intervalos, o payload usa a transferência convencional.
 
 ## v1.0.0 — 2026-10-15

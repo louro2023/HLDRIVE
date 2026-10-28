@@ -39,7 +39,7 @@ A compilação do ELF 1.0.2 com SDK v0.44 e LLVM 20 também passou. A nova naveg
 
 ## Estado da versão 1.0.1
 
-O usuário testou a versão 1.0.1 em seu PS5 e confirmou que a transferência do Drive funciona com velocidade muito maior, relatando mais de 500 Mb/s. Firmware, método de medição e detalhes da rede não foram informados; o resultado pode variar conforme o ambiente.
+Correção informada pelo usuário em 28/10/2026: nunca foram alcançados 500 Mbps. O registro anterior dessa velocidade estava incorreto e não deve ser usado como resultado de teste.
 
 A compilação local valida a geração do frontend e do ELF. As verificações de traduções conferem as 16 localidades. Os testes automatizados existentes cobrem parser do Drive, filas, transporte HTTP, ciclo de vida, proteção de arquivos e interações simuladas da interface. As simulações não reproduzem a rede nem os serviços do PS5.
 

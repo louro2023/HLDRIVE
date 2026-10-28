@@ -4,7 +4,7 @@
 
 Gerenciador de arquivos homebrew para PS5, com navegação em pastas públicas do Google Drive e download direto para o console. Interface, imagens e recursos estão incorporados em um único arquivo `HLDRIVE.elf`.
 
-> **Pré-release 1.1.2-rc.1 — links salvos e avisos do Drive traduzidos.** Salve suas pastas favoritas com um nome opcional, abra novamente pela lista e exclua links que não usa mais. Avisos do Google Drive acompanham o idioma selecionado. Mantém o fundo animado e o download experimental da versão anterior; desempenho ainda não confirmado no PS5. [Baixar ELF](https://github.com/louro2023/HLDRIVE/releases/download/v1.1.2-rc.1/HLDRIVE.1.1.2-rc.1.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.1.2-rc.1/HLDRIVE.1.1.2-rc.1.elf.sha256) · [Notas e limitações](docs/releases/v1.1.2-rc.1.md).
+> **Pre-release 1.1.3-rc.1 — teste com 48 conexões.** Limite de conexões por arquivo triplicado de 16 para 48 para comparação no PS5, mantendo segmentos de 8 MiB. Ganho de velocidade ainda não confirmado. [Baixar ELF](https://github.com/louro2023/HLDRIVE/releases/download/v1.1.3-rc.1/HLDRIVE.1.1.3-rc.1.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.1.3-rc.1/HLDRIVE.1.1.3-rc.1.elf.sha256) · [Notas e limitações](docs/releases/v1.1.3-rc.1.md).
 
 **Downloads:** [ELF 1.0.2](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf) · [SHA-256](https://github.com/louro2023/HLDRIVE/releases/download/v1.0.2/HLDRIVE.elf.sha256) · [Release](https://github.com/louro2023/HLDRIVE/releases/tag/v1.0.2)
 
@@ -19,7 +19,7 @@ Veja a [galeria de telas](docs/GALLERY.md), [histórico de alterações](CHANGEL
 - Abrir links públicos do Drive e navegar por subpastas.
 - Salvar links de pastas com um nome opcional, reabrir pela lista e excluir links salvos. A lista fica armazenada no navegador utilizado; limpar os dados do site remove os links.
 - Selecionar arquivos e pastas e escolher o destino no PS5.
-- Acelerar arquivos grandes com até 16 conexões simultâneas por arquivo, segmentos de 8 MiB e gravações agrupadas quando o Drive oferecer intervalos e um identificador forte; os arquivos escolhidos são baixados em fila. O painel mostra velocidade em Mbps/MiB/s, média, conexões ativas e motivo de usar conexão única.
+- Acelerar arquivos grandes com até 48 conexões simultâneas por arquivo (limite experimental para testes), segmentos de 8 MiB e gravações agrupadas quando o Drive oferecer intervalos e um identificador forte; os arquivos escolhidos são baixados em fila. O painel mostra velocidade em Mbps/MiB/s, média, conexões ativas e motivo de usar conexão única.
 - Baixar itens selecionados ou copiar e colar arquivos no console.
 - Preservar pastas, acompanhar progresso e cancelar transferências.
 - Navegar, copiar, mover, renomear e excluir arquivos locais.
@@ -50,7 +50,7 @@ Menus, tela do Drive, transferências, gerenciador de arquivos e diálogos acomp
 - PS5 com ambiente homebrew ativo e um método compatível para iniciar arquivos ELF.
 - Internet e espaço disponível no destino.
 
-1. Baixe o arquivo `.elf` nos anexos da release e inicie-o pelo ambiente homebrew configurado no console. Nesta pré-release ele se chama `HLDRIVE.1.1.2-rc.1.elf`.
+1. Baixe o arquivo `.elf` nos anexos da release e inicie-o pelo ambiente homebrew configurado no console. Nesta pré-release ele se chama `HLDRIVE.1.1.3-rc.1.elf`.
 2. O payload tenta abrir `http://127.0.0.1:8081/?console=1`. Se necessário, acesse `http://IP_DO_PS5:8081` na rede local.
 3. Na aba Google Drive, informe o link público da pasta. O PS5 busca e baixa os arquivos por conta própria.
 

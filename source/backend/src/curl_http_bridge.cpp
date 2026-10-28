@@ -27,7 +27,7 @@ using Clock=std::chrono::steady_clock;
 constexpr size_t kBodyCap=8u*1024u*1024u;
 constexpr long kCurlBufferSize=256L*1024L;
 constexpr long long kParallelDownloadThreshold=32LL*1024LL*1024LL;
-constexpr int kParallelDownloadConnections=16;
+constexpr int kParallelDownloadConnections=48;
 constexpr long long kSegmentBytes=8LL*1024LL*1024LL;
 constexpr size_t kWriteBufferBytes=1024u*1024u;
 struct Metrics {

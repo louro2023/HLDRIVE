@@ -10,7 +10,7 @@ import threading
 import time
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-TOTAL = 160 * 1024 * 1024 + 123
+TOTAL = 400 * 1024 * 1024 + 123
 PATTERN = bytes(range(251)) * 270
 
 
